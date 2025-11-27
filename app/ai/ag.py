@@ -233,7 +233,7 @@ class AlgorithmeGenetique:
             assignees.update(trajet)
         
         # Trouver les demandes manquantes
-        toutes_demandes = set(range(len(solution.demandes)))
+        toutes_demandes = set(range(len(solution.demandes)))    
         manquantes = toutes_demandes - assignees
         
         # Assigner les demandes manquantes aléatoirement
