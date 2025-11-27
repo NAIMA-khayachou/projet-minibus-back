@@ -1,3 +1,4 @@
 # OSRM files to ignore
 *.osrm
-*.osrm.*
+*.osrm.*data/*.osrm.*
+data/*.osm.pbf
