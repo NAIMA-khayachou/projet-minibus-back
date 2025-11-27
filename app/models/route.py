@@ -3,7 +3,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from typing import List, Dict, Any
-from models.bus import Bus
+from app.models.bus import Bus
+
 
 Base = declarative_base()
 
