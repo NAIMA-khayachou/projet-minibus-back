@@ -1,4 +1,4 @@
-# OSRM files to ignore
-*.osrm
-*.osrm.*data/*.osrm.*
-data/*.osm.pbf
+data/
+app/data/
+*.osm.pbf
+*.osrm.*
