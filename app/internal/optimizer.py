@@ -2,85 +2,173 @@ from database.crud import get_clients, get_stations, get_minibus
 from osrm_engine import Distance_total, Duree_Total
 import random
 
-class Algogenetic:
-    def __init__(self, population_size=20):
-        self.population = []
-        self.population_size = population_size
 
+class AlgoGenetic:
+
+    def __init__(self, population_size=20):
+        self.population_size = population_size
+        self.population = []
+
+    # ---------------------------------------------------------
+    # 1. INITIALISATION DE LA POPULATION
+    # ---------------------------------------------------------
     def initialize_population(self):
-        clients_list = get_clients()       
-        minibus_list = get_minibus()      
-        stations_list = get_stations()     
+        clients_list = get_clients()
+        minibus_list = get_minibus()
 
         for _ in range(self.population_size):
-            random.shuffle(clients_list)   
-            solution = []                  
+            random.shuffle(clients_list)
+            solution = []
 
-            for minibus in minibus_list:
-                minibus_clients = []
-                total_passengers = 0
+            for mb in minibus_list:
 
-                
-                for client in clients_list:
-                    if total_passengers + client.nbr_place <= minibus.capacite_max:
-                        minibus_clients.append({
-                            "client_id": client.name,
-                            "station_depart": client.depart,
-                            "station_arrivee": client.destination,
-                            "nbr_places": client.nbr_place
+                mb_clients = []
+                total_pass = 0
+
+                for cl in clients_list:
+                    if total_pass + cl.nbr_place <= mb.capacite_max:
+                        mb_clients.append({
+                            "client_id": cl.name,
+                            "station_depart": cl.depart,
+                            "station_arrivee": cl.destination,
+                            "nbr_places": cl.nbr_place
                         })
-                        total_passengers += client.nbr_place
+                        total_pass += cl.nbr_place
 
-               
-                if minibus_clients:
-                    distance = Distance_total(minibus_clients)
-                    duree = Duree_Total(minibus_clients)
+                if mb_clients:
+                    dist = Distance_total(mb_clients)
+                    duree = Duree_Total(mb_clients)
 
-                    if distance <= minibus.limite_distance and duree <= minibus.limite_duree:
-                        solution.append({
-                            "minibus_id": minibus.id,
-                            "clients": minibus_clients,
-                            "distance_total": distance,
-                            "duree_total": duree
-                        })
+                    solution.append({
+                        "minibus_id": mb.id,
+                        "clients": mb_clients,
+                        "distance_total": dist,
+                        "duree_total": duree,
+                        "capacite_max": mb.capacite_max,
+                        "limite_distance": mb.limite_distance,
+                        "limite_duree": mb.limite_duree
+                    })
 
-            
             if solution:
                 self.population.append(solution)
 
-        print(f"Population initiale générée : {len(self.population)} itinéraires")
-    def fitness(self, solutions):
-       list_fitness=[]
+        print("Population initiale :", len(self.population))
 
-       for solution in solutions:
-            distance_total = 0
-            temps_total = 0
+
+
+    # ---------------------------------------------------------
+    # 2. FITNESS
+    # ---------------------------------------------------------
+    def fitness(self, population):
+        list_fit = []
+
+        for solution in population:
+
+            dist = sum(mb["distance_total"] for mb in solution)
+            duree = sum(mb["duree_total"] for mb in solution)
+
             penalite = 0
+            for mb in solution:
+                total_places = sum(c["nbr_places"] for c in mb["clients"])
 
-            for minibus in solution:
-            
-               distance_total += minibus['distance_total']
-               temps_total += minibus['duree_total']
-               total_passagers = sum(c['nbr_places'] for c in minibus['clients'])
+                if total_places > mb["capacite_max"]:
+                    penalite += 500
 
-            
-               if total_passagers > minibus['capacite_max']:
-                 penalite += 100
-               if distance_total > minibus['limite_distance']:
-                  penalite += 100
-               if temps_total > minibus['limite_duree']:
-                   penalite += 100
-            fitness_score = 1 / (distance_total + temps_total + penalite)
-            list_fitness.append((fitness_score,solution))
-       return list_fitness
-    def Selection_tournoi(self,list_fitness,taille_tournoi=3,nombre_parents=5):
-        parents=[]
-        for _ in range(nombre_parents):
-             tournoi=random.sample(list_fitness,taille_tournoi)
-             meillure_score,meillure_solution=max(tournoi,key=lambda x:x[0]) 
-             parents.append(meillure_solution)  
+                if mb["distance_total"] > mb["limite_distance"]:
+                    penalite += 500
+
+                if mb["duree_total"] > mb["limite_duree"]:
+                    penalite += 500
+
+            score = 1 / (1 + dist + duree + penalite)
+            list_fit.append((score, solution))
+
+        return list_fit
+
+
+
+    # ---------------------------------------------------------
+    # 3. SELECTION PAR TOURNOI
+    # ---------------------------------------------------------
+    def selection_tournoi(self, list_fitness, tournoi=3, nb_parents=6):
+        parents = []
+
+        for _ in range(nb_parents):
+            groupe = random.sample(list_fitness, tournoi)
+            best = max(groupe, key=lambda x: x[0])
+            parents.append(best[1])
+
         return parents
 
-             
-             
-                 
+
+
+    # ---------------------------------------------------------
+    # 4. CROSSOVER
+    # ---------------------------------------------------------
+    def crossover(self, parent1, parent2):
+
+        enfant = []
+
+        max_len = min(len(parent1), len(parent2))
+
+        for i in range(max_len):
+            if random.random() < 0.5:
+                enfant.append(parent1[i])
+            else:
+                enfant.append(parent2[i])
+
+        return enfant
+
+
+
+    # ---------------------------------------------------------
+    # 5. MUTATION
+    # ---------------------------------------------------------
+    def mutation(self, enfant):
+
+        # ---- 1 : mélanger l’ordre des clients ----
+        for mb in enfant:
+            if random.random() < 0.2:
+                random.shuffle(mb["clients"])
+
+        # ---- 2 : réaffecter un client ----
+        if random.random() < 0.3:
+
+            mb_source = random.choice([m for m in enfant if len(m["clients"]) > 0])
+            client = random.choice(mb_source["clients"])
+            mb_source["clients"].remove(client)
+
+            autres = [m for m in enfant if m != mb_source]
+            if autres:
+                mb_dest = random.choice(autres)
+
+                cap = sum(c["nbr_places"] for c in mb_dest["clients"])
+                if cap + client["nbr_places"] <= mb_dest["capacite_max"]:
+                    mb_dest["clients"].append(client)
+                else:
+                    mb_source["clients"].append(client)
+
+        return enfant
+
+
+
+    # ---------------------------------------------------------
+    # 6. GENERATION SUIVANTE
+    # ---------------------------------------------------------
+    def next_generation(self):
+
+        fitness_vals = self.fitness(self.population)
+        parents = self.selection_tournoi(fitness_vals)
+
+        new_pop = []
+
+        while len(new_pop) < self.population_size:
+            p1 = random.choice(parents)
+            p2 = random.choice(parents)
+
+            enfant = self.crossover(p1, p2)
+            enfant = self.mutation(enfant)
+
+            new_pop.append(enfant)
+
+        self.population = new_pop
