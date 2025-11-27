@@ -1,0 +1,2 @@
+=================commandes utilisé pour cette application fastapis======================
+"http://router.project-osrm.org" = API OSRM GRATUITE EN LIGNE
