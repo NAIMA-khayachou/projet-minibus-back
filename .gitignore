@@ -1,0 +1,3 @@
+# OSRM files to ignore
+*.osrm
+*.osrm.*
