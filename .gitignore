@@ -2,3 +2,5 @@ data/
 app/data/
 *.osm.pbf
 *.osrm.*
+__pycache__/
+*.pyc
