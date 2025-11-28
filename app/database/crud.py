@@ -181,7 +181,7 @@ def get_pending_reservations():
     except Exception as e:
         logger.error(f" Erreur get_pending_reservations: {e}")
         return []
-
+    
 def get_all_reservations_for_algo():
     """Récupère toutes les réservations avec coordonnées des stations pour l'algorithme"""
     try:
@@ -213,6 +213,7 @@ def get_all_reservations_for_algo():
     except Exception as e:
         logger.error(f" Erreur get_all_reservations_for_algo: {e}")
         return []
+
 # ==================== OPTIMIZED ROUTES ====================
 def save_optimized_route(minibus_id, station_sequence, total_distance, total_passengers):
     """Sauvegarde une route optimisée trouvée par l'algorithme"""

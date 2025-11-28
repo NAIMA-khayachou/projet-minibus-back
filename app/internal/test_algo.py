@@ -2,7 +2,7 @@ from app.internal.optimizer import AlgoGenetic
 
 
 # Créer l'instance
-algo = AlgoGenetic(population_size=10)
+algo = AlgoGenetic()
 
 # Tester l'initialisation
 print("=== TEST INITIALISATION ===")

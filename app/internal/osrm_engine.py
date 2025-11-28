@@ -58,7 +58,7 @@ def get_cost_matrices(
         # Gère les erreurs de connexion (serveur non démarré, Timeout, etc.)
         print(f"Erreur de connexion OSRM: {e}. L'URL était: {url}")
         return (None, None)
-
+"""
 # --- 4. Exemple de Test Mis à Jour ---
 if __name__ == '__main__':
     # Deux points de test à Marrakech (lon, lat)
@@ -86,3 +86,4 @@ if __name__ == '__main__':
         print("Distance de B à A (mètres):", distance_matrix[1][0])
     
     print("=============================================")
+    """
