@@ -15,14 +15,15 @@ class DatabaseConnection:
     def _initialize_connection(self):
         """Initialise la connexion à la base PostgreSQL"""
         try:
+
             self.pool = psycopg2.pool.SimpleConnectionPool(
                 1,  # min connections
                 20, # max connections
-                user="postgres",
-                password="maroua2004",  
+                user="admin",
+                password="admin",  
                 host="localhost",
                 port="5432",
-                database="transport_db",
+                database="projet_minibus",
                 client_encoding='utf-8'
             )
             logger.info(" Connexion à PostgreSQL réussie")

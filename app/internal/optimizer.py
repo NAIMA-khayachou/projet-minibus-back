@@ -1,5 +1,5 @@
-from app.database.crud import get_clients, get_stations, get_minibus
-from osrm_engine import Distance_total, Duree_Total
+from app.database.crud import *
+from .osrm_engine import get_cost_matrix
 import random
 
 class Algogenetic:
@@ -8,9 +8,9 @@ class Algogenetic:
         self.population_size = population_size
 
     def initialize_population(self):
-        clients_list = get_clients()       
-        minibus_list = get_minibus()      
-        stations_list = get_stations()     
+        clients_list = get_all_clients()       
+        minibus_list = get_all_minibus()      
+        stations_list = get_all_stations()     
 
         for _ in range(self.population_size):
             random.shuffle(clients_list)   

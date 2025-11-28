@@ -15,8 +15,8 @@ def main():
     try:
         from sqlalchemy import create_engine
         from sqlalchemy.orm import sessionmaker
-        
-        engine = create_engine('postgresql://postgres:0000@localhost:5432/transport_db')
+
+        engine = create_engine('postgresql://admin:admin@localhost:5432/projet_minibus')
         Session = sessionmaker(bind=engine)
         db_session = Session()
         
