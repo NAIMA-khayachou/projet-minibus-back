@@ -41,7 +41,8 @@ def get_all_minibus():
         conn = db.get_connection()
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT id, capacity, license_plate, current_passengers, status, last_maintenance 
+            SELECT id, capacity, license_plate, current_passengers, status, 
+                   last_maintenance, limite_distance, limite_duree 
             FROM minibus ORDER BY id;
         """)
         minibus = cursor.fetchall()
@@ -181,6 +182,37 @@ def get_pending_reservations():
         logger.error(f" Erreur get_pending_reservations: {e}")
         return []
 
+def get_all_reservations_for_algo():
+    """Récupère toutes les réservations avec coordonnées des stations pour l'algorithme"""
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT 
+                r.id,
+                r.client_id,
+                r.pickup_station_id,
+                r.dropoff_station_id,
+                r.number_of_people,
+                r.desired_time,
+                s1.latitude as pickup_lat,
+                s1.longitude as pickup_lon,
+                s2.latitude as dropoff_lat,
+                s2.longitude as dropoff_lon
+            FROM reservations r
+            JOIN stations s1 ON r.pickup_station_id = s1.id
+            JOIN stations s2 ON r.dropoff_station_id = s2.id
+            WHERE r.status = 'pending'
+            ORDER BY r.desired_time;
+        """)
+        reservations = cursor.fetchall()
+        cursor.close()
+        db.release_connection(conn)
+        logger.info(f" Récupéré {len(reservations)} réservations pour algo")
+        return reservations
+    except Exception as e:
+        logger.error(f" Erreur get_all_reservations_for_algo: {e}")
+        return []
 # ==================== OPTIMIZED ROUTES ====================
 def save_optimized_route(minibus_id, station_sequence, total_distance, total_passengers):
     """Sauvegarde une route optimisée trouvée par l'algorithme"""
