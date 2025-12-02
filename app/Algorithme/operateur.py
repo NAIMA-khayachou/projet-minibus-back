@@ -7,8 +7,13 @@ from .solution import Solution, Arret
 class GeneticOperators:
     """Opérateurs génétiques pour l'algorithme"""
     
-    def __init__(self, matrice_distances):
+    def __init__(self, matrice_distances,stations_dict):
         self.matrice_distances = matrice_distances
+        self.stations_dict = stations_dict
+        self.station_ids_order = sorted(stations_dict.keys())
+        self.station_id_to_index = {
+            sid: idx for idx, sid in enumerate(self.station_ids_order)
+        }
     
     # ============= SÉLECTION =============
     
@@ -197,8 +202,8 @@ class GeneticOperators:
             pos_dropoff = random.randint(pos_pickup, len(arrets_filtres) - 1)
             
             pickup = Arret(
-                station_id=reservation.pickup_station,
-                station_name = solution.stations_dict[reservation.pickup_station]["name"],
+                station_id=reservation.pickup_station_id,
+                station_name = solution.stations_dict[reservation.pickup_station_id]["name"],
 
                 type="PICKUP",
                 reservation_id=reservation.id,
@@ -206,8 +211,8 @@ class GeneticOperators:
             )
             
             dropoff = Arret(
-                station_id=reservation.dropoff_station,
-                station_name=solution.stations_dict[reservation.dropoff_station]["name"],
+                station_id=reservation.dropoff_station_id,
+                station_name=solution.stations_dict[reservation.dropoff_station_id]["name"],
                 type="DROPOFF",
                 reservation_id=reservation.id,
                 personnes=reservation.number_of_people

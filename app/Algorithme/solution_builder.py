@@ -1,64 +1,124 @@
-# app/algorithms/solution_builder.py
+# app/algorithms/solution_builder.py - VERSION CORRIGÉE
 
 import random
-
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Tuple
 from .solution import Solution, Arret, ItineraireMinibus
-from ..database.crud import get_all_reservations,get_all_minibus,get_all_stations
+import logging
+
+logger = logging.getLogger(__name__)
+
 class SolutionBuilder:
-    """Construit des solutions initiales"""
+    """Construit des solutions initiales avec gestion robuste"""
     
-    def __init__(self, matrice_distances, matrice_durees, stations_dict):
+    def __init__(self, matrice_distances, matrice_durees, stations_dict, depot_station_id=None):
+        """
+        Args:
+            matrice_distances: Matrice NxN des distances entre stations
+            matrice_durees: Matrice NxN des durées entre stations
+            stations_dict: Dict {station_id: {'name': str, 'latitude': float, 'longitude': float}}
+            depot_station_id: ID de la station dépôt (si None, prend la première)
+        """
         self.matrice_distances = matrice_distances
         self.matrice_durees = matrice_durees
         self.stations_dict = stations_dict
-        # Construire un mapping station_id -> index (les matrices sont indexées
-        # par la position dans la liste `stations` utilisée lors de la création
-        # des matrices). On suppose que `stations_dict` a été construit dans
-        # le même ordre que la liste passée à `compute_cost_matrices`.
-        self.station_ids_order = list(stations_dict.keys())
+        
+        # ✅ CORRECTION 1: Ordre explicite et vérifié
+        self.station_ids_order = sorted(stations_dict.keys())  # Tri pour cohérence
         self.station_id_to_index = {
             sid: idx for idx, sid in enumerate(self.station_ids_order)
         }
-        # Dépôt : par défaut, le premier élément de `stations_dict` (si présent)
-        self.depot_station_id = self.station_ids_order[0] if self.station_ids_order else 0
+        
+        # ✅ CORRECTION 2: Dépôt explicite avec validation
+        if depot_station_id is None:
+            self.depot_station_id = self.station_ids_order[0]
+            logger.warning(f"⚠️ Aucun dépôt défini, utilisation de la station {self.depot_station_id}")
+        else:
+            if depot_station_id not in self.station_id_to_index:
+                raise ValueError(f"❌ Dépôt {depot_station_id} introuvable dans stations_dict")
+            self.depot_station_id = depot_station_id
+        
+        # Log de vérification
+        logger.info(f"✅ SolutionBuilder initialisé:")
+        logger.info(f"   - {len(stations_dict)} stations")
+        logger.info(f"   - Dépôt: Station {self.depot_station_id}")
+        logger.info(f"   - Ordre stations: {self.station_ids_order[:5]}...")
 
-    def _id_to_index(self, station_id):
-        """Retourne l'index de la station dans les matrices ou None."""
-        return self.station_id_to_index.get(station_id)
+    def _id_to_index(self, station_id: int) -> Optional[int]:
+        """Retourne l'index de la station dans les matrices"""
+        idx = self.station_id_to_index.get(station_id)
+        if idx is None:
+            logger.error(f"❌ Station ID {station_id} introuvable dans le mapping")
+        return idx
 
-    def _get_station_name(self, station_obj):
-        """Prend en charge station sous forme de dict ou d'objet."""
+    def _get_station_name(self, station_obj) -> str:
+        """Récupère le nom d'une station (dict ou objet)"""
         if station_obj is None:
-            return None
+            return "Unknown"
         if isinstance(station_obj, dict):
-            return station_obj.get("name") or station_obj.get("station_name")
-        return getattr(station_obj, "name", None)
+            return station_obj.get("name") or station_obj.get("station_name") or "Unknown"
+        return getattr(station_obj, "name", "Unknown")
 
-    def _get_station_coords(self, station_obj):
-        """Retourne (latitude, longitude) depuis dict ou objet."""
+    def _get_station_coords(self, station_obj) -> Tuple[Optional[float], Optional[float]]:
+        """Retourne (latitude, longitude)"""
         if station_obj is None:
             return None, None
         if isinstance(station_obj, dict):
             return station_obj.get("latitude"), station_obj.get("longitude")
         return getattr(station_obj, "latitude", None), getattr(station_obj, "longitude", None)
     
-    def generer_population_initiale(self, reservations, minibus, taille_population: int = 100) -> List[Solution]:
-        """Génère une population initiale diverse"""
+    def _validate_reservation(self, reservation) -> bool:
+        """✅ NOUVELLE: Valide qu'une réservation a des données cohérentes"""
+        # ✅ CORRECTION 3: Gestion des deux formats (tuple CRUD vs objet SQLAlchemy)
+        if isinstance(reservation, tuple):
+            # Format: (id, client_name, pickup_station_NAME, dropoff_station_NAME, people, time, status)
+            logger.error(f"❌ Réservation {reservation[0]}: Format tuple détecté, attendu objet avec pickup_station_id")
+            return False
+        
+        # Vérifier que pickup/dropoff sont des IDs (integers)
+        pickup_id = getattr(reservation, 'pickup_station_id', None) or getattr(reservation, 'pickup_station', None)
+        dropoff_id = getattr(reservation, 'dropoff_station_id', None) or getattr(reservation, 'dropoff_station', None)
+        
+        if not isinstance(pickup_id, int) or not isinstance(dropoff_id, int):
+            logger.error(f"❌ Réservation {reservation.id}: pickup={pickup_id} dropoff={dropoff_id} (doivent être des integers)")
+            return False
+        
+        if pickup_id not in self.station_id_to_index:
+            logger.error(f"❌ Réservation {reservation.id}: pickup_station_id={pickup_id} introuvable")
+            return False
+        
+        if dropoff_id not in self.station_id_to_index:
+            logger.error(f"❌ Réservation {reservation.id}: dropoff_station_id={dropoff_id} introuvable")
+            return False
+        
+        return True
+    
+    def generer_population_initiale(self, reservations, minibus, taille_population: int = 50) -> List[Solution]:
+        """✅ CORRECTION 4: Population initiale plus grande et avec validation"""
+        
+        # ✅ Filtrer les réservations invalides
+        reservations_valides = [r for r in reservations if self._validate_reservation(r)]
+        
+        if len(reservations_valides) < len(reservations):
+            logger.warning(f"⚠️ {len(reservations) - len(reservations_valides)} réservations invalides ignorées")
+        
+        if not reservations_valides:
+            logger.error("❌ Aucune réservation valide, impossible de générer une population")
+            return []
+        
         population = []
         
         for i in range(taille_population):
             # 33% aléatoire
             if i < taille_population // 3:
-                solution = self.affectation_aleatoire(reservations, minibus)
+                solution = self.affectation_aleatoire(reservations_valides, minibus)
             
             # 33% plus proche voisin
             elif i < 2 * taille_population // 3:
-                solution = self.heuristique_plus_proche_voisin(reservations, minibus)
+                solution = self.heuristique_plus_proche_voisin(reservations_valides, minibus)
             
             # 34% regroupement géographique
             else:
-                solution = self.regroupement_geographique(reservations, minibus)
+                solution = self.regroupement_geographique(reservations_valides, minibus)
             
             # Construire les itinéraires
             self.construire_itineraires(solution)
@@ -68,6 +128,7 @@ class SolutionBuilder:
             
             population.append(solution)
         
+        logger.info(f"✅ Population de {len(population)} solutions générée")
         return population
     
     def affectation_aleatoire(self, reservations, minibus) -> Solution:
@@ -81,40 +142,44 @@ class SolutionBuilder:
         return solution
     
     def heuristique_plus_proche_voisin(self, reservations, minibus) -> Solution:
-        """Construit une solution avec l'heuristique du plus proche voisin"""
+        """✅ CORRECTION 5: Heuristique avec accès correct aux IDs"""
         solution = Solution(minibus, reservations, self.stations_dict)
         reservations_non_assignees = list(reservations)
         
-        # Dépôt (prendre le premier ID présent dans `stations_dict`)
-        depot_id = self.depot_station_id
-        
         for bus in minibus:
             capacite_restante = bus.capacity
-            position_actuelle_id = depot_id
+            position_actuelle_id = self.depot_station_id
             
             while reservations_non_assignees and capacite_restante > 0:
                 meilleure_reservation = None
                 distance_min = float('inf')
                 
-                # Trouver la réservation la plus proche
                 for reservation in reservations_non_assignees:
                     if reservation.number_of_people <= capacite_restante:
-                        pickup_id = reservation.pickup_station
+                        # ✅ Accès correct selon le format
+                        pickup_id = getattr(reservation, 'pickup_station_id', None) or \
+                                    getattr(reservation, 'pickup_station', None)
+                        
                         idx_actuel = self._id_to_index(position_actuelle_id)
                         idx_pickup = self._id_to_index(pickup_id)
+                        
                         if idx_actuel is None or idx_pickup is None:
-                              continue  # skip si ID invalide
-
+                            continue
+                        
                         distance = self.matrice_distances[idx_actuel][idx_pickup]
+                        
                         if distance < distance_min:
                             distance_min = distance
                             meilleure_reservation = reservation
                 
-                # Assigner si trouvée
                 if meilleure_reservation:
                     solution.affectations[meilleure_reservation.id] = bus.id
                     capacite_restante -= meilleure_reservation.number_of_people
-                    position_actuelle_id = meilleure_reservation.pickup_station
+                    
+                    pickup_id = getattr(meilleure_reservation, 'pickup_station_id', None) or \
+                                getattr(meilleure_reservation, 'pickup_station', None)
+                    position_actuelle_id = pickup_id
+                    
                     reservations_non_assignees.remove(meilleure_reservation)
                 else:
                     break
@@ -122,7 +187,7 @@ class SolutionBuilder:
         return solution
     
     def regroupement_geographique(self, reservations, minibus) -> Solution:
-        """Regroupe les réservations par zones géographiques"""
+        """✅ CORRECTION 6: Clustering avec mapping correct"""
         from sklearn.cluster import KMeans
         import numpy as np
         
@@ -131,22 +196,35 @@ class SolutionBuilder:
         if len(reservations) == 0:
             return solution
         
-        # Calculer les centres des réservations
+        # ✅ Garder un mapping index_centres → index_reservation
         centres = []
-        for reservation in reservations:
-            pickup_obj = self.stations_dict.get(reservation.pickup_station)
-            dropoff_obj = self.stations_dict.get(reservation.dropoff_station)
+        reservation_indices = []
+        
+        for i, reservation in enumerate(reservations):
+            # Accès correct aux IDs
+            pickup_id = getattr(reservation, 'pickup_station_id', None) or \
+                       getattr(reservation, 'pickup_station', None)
+            dropoff_id = getattr(reservation, 'dropoff_station_id', None) or \
+                        getattr(reservation, 'dropoff_station', None)
+            
+            pickup_obj = self.stations_dict.get(pickup_id)
+            dropoff_obj = self.stations_dict.get(dropoff_id)
+            
             lat1, lon1 = self._get_station_coords(pickup_obj)
             lat2, lon2 = self._get_station_coords(dropoff_obj)
-            if lat1 is None or lat2 is None or lon1 is None or lon2 is None:
-                # skip reservations with missing station coords
-                continue
-            centre_lat = (lat1 + lat2) / 2
-            centre_lon = (lon1 + lon2) / 2
-            centres.append([centre_lat, centre_lon])
+            
+            if lat1 is not None and lat2 is not None:
+                centre_lat = (lat1 + lat2) / 2
+                centre_lon = (lon1 + lon2) / 2
+                centres.append([centre_lat, centre_lon])
+                reservation_indices.append(i)  # ✅ Garder le lien
         
-        # Clustering K-Means
-        n_clusters = min(len(minibus), len(reservations))
+        if not centres:
+            logger.warning("⚠️ Aucune coordonnée valide pour clustering, utilisation aléatoire")
+            return self.affectation_aleatoire(reservations, minibus)
+        
+        # Clustering
+        n_clusters = min(len(minibus), len(centres))
         kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
         labels = kmeans.fit_predict(centres)
         
@@ -158,62 +236,63 @@ class SolutionBuilder:
             bus = minibus[cluster_id]
             capacite_restante = bus.capacity
             
-            # Récupérer les réservations de ce cluster
-            reservations_cluster = [
-                reservations[i] for i in range(len(reservations))
-                if labels[i] == cluster_id
-            ]
-            
-            # Assigner si capacité suffisante
-            for reservation in reservations_cluster:
-                if reservation.number_of_people <= capacite_restante:
-                    solution.affectations[reservation.id] = bus.id
-                    capacite_restante -= reservation.number_of_people
+            # ✅ Utiliser le mapping correct
+            for idx_centre, label in enumerate(labels):
+                if label == cluster_id:
+                    idx_reservation = reservation_indices[idx_centre]
+                    reservation = reservations[idx_reservation]
+                    
+                    if reservation.number_of_people <= capacite_restante:
+                        solution.affectations[reservation.id] = bus.id
+                        capacite_restante -= reservation.number_of_people
         
         return solution
     
     def construire_itineraires(self, solution: Solution):
-        """Construit les itinéraires détaillés pour chaque minibus"""
-        depot_id = self.depot_station_id
-        depot_name = self._get_station_name(self.stations_dict.get(depot_id)) or "Depot"
+        """Construit les itinéraires détaillés"""
+        depot_name = self._get_station_name(self.stations_dict.get(self.depot_station_id))
         
         for minibus in solution.minibus_list:
             minibus_id = minibus.id
             reservations_minibus = solution.get_reservations_by_minibus(minibus_id)
             
             if not reservations_minibus:
-                # Minibus non utilisé
                 solution.itineraires[minibus_id].arrets = []
                 continue
             
-            # Créer la liste des arrêts
             arrets = []
             
             # Départ du dépôt
             arrets.append(Arret(
-                station_id=depot_id,
+                station_id=self.depot_station_id,
                 station_name=depot_name,
                 type="DEPOT"
             ))
             
-            # Ajouter tous les pickups
+            # Pickups
             for reservation in reservations_minibus:
-                pickup_obj = self.stations_dict.get(reservation.pickup_station)
-                station_name = self._get_station_name(pickup_obj) or str(reservation.pickup_station)
+                pickup_id = getattr(reservation, 'pickup_station_id', None) or \
+                           getattr(reservation, 'pickup_station', None)
+                pickup_obj = self.stations_dict.get(pickup_id)
+                station_name = self._get_station_name(pickup_obj)
+                
                 arrets.append(Arret(
-                    station_id=reservation.pickup_station,
+                    station_id=pickup_id,
                     station_name=station_name,
                     type="PICKUP",
                     reservation_id=reservation.id,
                     personnes=reservation.number_of_people
                 ))
             
-            # Ajouter tous les dropoffs
+            # Dropoffs
             for reservation in reservations_minibus:
-                dropoff_obj = self.stations_dict.get(reservation.dropoff_station)
-                station_name = self._get_station_name(dropoff_obj) or str(reservation.dropoff_station)
+                dropoff_id = getattr(reservation, 'dropoff_station_id', None) or \
+                            getattr(reservation, 'dropoff_station', None)
+                dropoff_obj = self.stations_dict.get(dropoff_id)
+                station_name = self._get_station_name(dropoff_obj)
+                
                 arrets.append(Arret(
-                    station_id=reservation.dropoff_station,
+                    station_id=dropoff_id,
                     station_name=station_name,
                     type="DROPOFF",
                     reservation_id=reservation.id,
@@ -222,7 +301,7 @@ class SolutionBuilder:
             
             # Retour au dépôt
             arrets.append(Arret(
-                station_id=depot_id,
+                station_id=self.depot_station_id,
                 station_name=depot_name,
                 type="DEPOT"
             ))
@@ -231,7 +310,7 @@ class SolutionBuilder:
             solution.itineraires[minibus_id].reservations_servies = [r.id for r in reservations_minibus]
     
     def reparer_solution(self, solution: Solution):
-        """Répare une solution pour respecter les contraintes"""
+        """✅ CORRECTION 7: Réparation avec réassignation"""
         for minibus in solution.minibus_list:
             minibus_id = minibus.id
             itineraire = solution.itineraires[minibus_id]
@@ -239,16 +318,19 @@ class SolutionBuilder:
             if not itineraire.arrets:
                 continue
             
-            # Vérifier et corriger l'ordre pickup-dropoff
+            # Corriger l'ordre pickup-dropoff
             self._corriger_ordre_pickup_dropoff(itineraire)
             
-            # Vérifier la capacité
-            self._verifier_capacite(solution, minibus_id, minibus.capacity)
+            # Vérifier la capacité ET réassigner si nécessaire
+            reservations_retirees = self._verifier_capacite(solution, minibus_id, minibus.capacity)
+            
+            # ✅ Réassigner les réservations problématiques
+            if reservations_retirees:
+                self._reassigner_reservations(solution, reservations_retirees)
     
     def _corriger_ordre_pickup_dropoff(self, itineraire: ItineraireMinibus):
-        """S'assure que chaque pickup vient avant son dropoff"""
+        """Assure que chaque pickup vient avant son dropoff"""
         reservation_pickups = {}
-        arrets_a_reordonner = []
         
         for i, arret in enumerate(itineraire.arrets):
             if arret.type == "PICKUP":
@@ -257,30 +339,52 @@ class SolutionBuilder:
                 if arret.reservation_id in reservation_pickups:
                     pickup_index = reservation_pickups[arret.reservation_id]
                     if pickup_index >= i:
-                        # Dropoff avant pickup : échanger
                         itineraire.arrets[pickup_index], itineraire.arrets[i] = \
                             itineraire.arrets[i], itineraire.arrets[pickup_index]
+                        reservation_pickups[arret.reservation_id] = i
     
-    def _verifier_capacite(self, solution: Solution, minibus_id: int, capacite: int):
-   
-       itineraire = solution.itineraires[minibus_id]
-       charge_actuelle = 0
-       reservations_a_retirer = set()  # utiliser set pour éviter doublons
+    def _verifier_capacite(self, solution: Solution, minibus_id: int, capacite: int) -> set:
+        """✅ CORRECTION 8: Retourne les réservations à réassigner"""
+        itineraire = solution.itineraires[minibus_id]
+        charge_actuelle = 0
+        reservations_a_retirer = set()
+        
+        for arret in itineraire.arrets:
+            if arret.type == "PICKUP":
+                charge_actuelle += arret.personnes
+                if charge_actuelle > capacite:
+                    reservations_a_retirer.add(arret.reservation_id)
+            elif arret.type == "DROPOFF":
+                if arret.reservation_id not in reservations_a_retirer:
+                    charge_actuelle -= arret.personnes
+        
+        # Retirer du minibus
+        if reservations_a_retirer:
+            itineraire.arrets = [
+                a for a in itineraire.arrets 
+                if a.reservation_id not in reservations_a_retirer
+            ]
+            for res_id in reservations_a_retirer:
+                if res_id in solution.affectations:
+                    del solution.affectations[res_id]
+        
+        return reservations_a_retirer
     
-       # 1️⃣ Identifier les réservations qui dépassent la capacité
-       for arret in itineraire.arrets:
-        if arret.type == "PICKUP":
-            charge_actuelle += arret.personnes
-            if charge_actuelle > capacite:
-                reservations_a_retirer.add(arret.reservation_id)
-        elif arret.type == "DROPOFF":
-            charge_actuelle -= arret.personnes
-    
-    # 2️⃣ Retirer les réservations problématiques
-       if reservations_a_retirer:
-        itineraire.arrets = [
-            a for a in itineraire.arrets if a.reservation_id not in reservations_a_retirer
-        ]
-        for res_id in reservations_a_retirer:
-            if res_id in solution.affectations:
-                del solution.affectations[res_id]
+    def _reassigner_reservations(self, solution: Solution, reservation_ids: set):
+        """✅ NOUVELLE: Réassigne les réservations retirées"""
+        for res_id in reservation_ids:
+            reservation = next((r for r in solution.reservations_list if r.id == res_id), None)
+            if not reservation:
+                continue
+            
+            # Trouver un minibus avec assez de capacité
+            for minibus in solution.minibus_list:
+                reservations_actuelles = solution.get_reservations_by_minibus(minibus.id)
+                charge_actuelle = sum(r.number_of_people for r in reservations_actuelles)
+                
+                if charge_actuelle + reservation.number_of_people <= minibus.capacity:
+                    solution.affectations[res_id] = minibus.id
+                    logger.info(f"♻️ Réservation {res_id} réassignée au minibus {minibus.id}")
+                    break
+            else:
+                logger.warning(f"⚠️ Impossible de réassigner la réservation {res_id}")

@@ -3,6 +3,7 @@
 from typing import List, Dict, Optional
 from dataclasses import dataclass, field
 from copy import deepcopy
+import copy
 import random
 
 @dataclass
@@ -58,9 +59,21 @@ class Solution:
         self.fitness: float = float('inf')
         self.violations_totales: int = 0
     
-    def copy(self) -> 'Solution':
-        """Crée une copie profonde de la solution"""
-        return deepcopy(self)
+    def copy(self):
+        nouvelle = Solution(
+            self.minibus_list, 
+            self.reservations_list, 
+            self.stations_dict
+        )
+        
+        # ✅ COPIE PROFONDE OBLIGATOIRE
+        nouvelle.affectations = copy.deepcopy(self.affectations)
+        nouvelle.itineraires = copy.deepcopy(self.itineraires)
+        nouvelle.fitness = self.fitness
+        nouvelle.distance_totale_flotte = self.distance_totale_flotte
+        nouvelle.duree_totale_flotte = self.duree_totale_flotte
+        
+        return nouvelle
     
     def get_reservations_by_minibus(self, minibus_id: int) -> List:
         """Retourne les réservations assignées à un minibus"""
