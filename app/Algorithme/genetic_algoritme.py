@@ -17,8 +17,8 @@ class GeneticAlgorithm:
         stations_dict,
         matrice_distances,
         matrice_durees,
-        population_size: int = 50,
-        generations: int = 100,
+        population_size: int = 10,
+        generations: int = 10,
         prob_croisement: float = 0.8,
         prob_mutation: float = 0.15,
         tournament_size: int = 3
