@@ -1,5 +1,5 @@
 from database.crud import get_clients, get_stations, get_minibus
-from osrm_engine import Distance_total, Duree_Total
+from app.core.osrm_engine import Distance_total, Duree_Total
 import random
 
 
