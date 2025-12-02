@@ -197,16 +197,17 @@ class GeneticOperators:
             pos_dropoff = random.randint(pos_pickup, len(arrets_filtres) - 1)
             
             pickup = Arret(
-                station_id=reservation.pickup_station_id,
-                station_name=solution.stations_dict[reservation.pickup_station_id].name,
+                station_id=reservation.pickup_station,
+                station_name = solution.stations_dict[reservation.pickup_station]["name"],
+
                 type="PICKUP",
                 reservation_id=reservation.id,
                 personnes=reservation.number_of_people
             )
             
             dropoff = Arret(
-                station_id=reservation.dropoff_station_id,
-                station_name=solution.stations_dict[reservation.dropoff_station_id].name,
+                station_id=reservation.dropoff_station,
+                station_name=solution.stations_dict[reservation.dropoff_station]["name"],
                 type="DROPOFF",
                 reservation_id=reservation.id,
                 personnes=reservation.number_of_people

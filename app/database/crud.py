@@ -1,4 +1,6 @@
 # database/crud.py
+from ..models.bus import Minibus 
+from ..models.route import Reservation
 from .connection import db
 import logging
 
@@ -36,21 +38,26 @@ def get_station_by_id(station_id):
 
 # ==================== MINIBUS ====================
 def get_all_minibus():
-    """Récupère tous les minibus""" 
+    """Récupère tous les minibus sous forme d'objets Minibus"""
     try: 
         conn = db.get_connection() 
         cursor = conn.cursor() 
-        cursor.execute(""" SELECT id, capacity, license_plate, current_passengers, status, last_maintenance FROM minibus ORDER BY id; """) 
-        minibus = cursor.fetchall() 
+        cursor.execute("""
+            SELECT id, capacity, license_plate, current_passengers, status, last_maintenance
+            FROM minibus ORDER BY id;
+        """) 
+        rows = cursor.fetchall() 
         cursor.close() 
         db.release_connection(conn) 
-        logger.info(f" Récupéré {len(minibus)} minibus") 
-        return minibus 
+
+        logger.info(f" Récupéré {len(rows)} minibus") 
+
+        # Conversion TUPLE → OBJET
+        return [Minibus(*row) for row in rows]
+
     except Exception as e: 
         logger.error(f" Erreur get_all_minibus: {e}")
         return []
-
-
 def get_available_minibus():
     """Récupère les minibus disponibles"""
     try:
@@ -105,8 +112,9 @@ def create_client(first_name, last_name, email=None, phone=None):
         return None
 
 # ==================== RÉSERVATIONS ====================
+
+
 def get_all_reservations():
-    """Récupère toutes les réservations avec détails"""
     try:
         conn = db.get_connection()
         cursor = conn.cursor()
@@ -114,22 +122,20 @@ def get_all_reservations():
             SELECT 
                 r.id, 
                 c.first_name || ' ' || c.last_name as client_name,
-                s1.name as pickup_station, 
-                s2.name as dropoff_station,
+                r.pickup_station_id,   -- ✅ Retourne l'ID
+                r.dropoff_station_id,  -- ✅ Retourne l'ID
                 r.number_of_people,
                 r.desired_time,
                 r.status
             FROM reservations r
             JOIN clients c ON r.client_id = c.id
-            JOIN stations s1 ON r.pickup_station_id = s1.id
-            JOIN stations s2 ON r.dropoff_station_id = s2.id
             ORDER BY r.desired_time;
         """)
-        reservations = cursor.fetchall()
+        rows = cursor.fetchall()
         cursor.close()
         db.release_connection(conn)
-        logger.info(f" Récupéré {len(reservations)} réservations")
-        return reservations
+        
+        return [Reservation(*row) for row in rows]
     except Exception as e:
         logger.error(f" Erreur get_all_reservations: {e}")
         return []

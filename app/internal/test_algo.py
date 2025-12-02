@@ -54,14 +54,15 @@ def run_optimization():
     matrice_durees, matrice_distances = compute_cost_matrices(points)
 
     stations_dict = {
-        s[0]: {
-            "id": s[0],
-            "name": s[1],
-            "latitude": s[2],
-            "longitude": s[3]
-        }
-        for s in stations
+    s[0]: {  # nouvelle version : clé = nom de la station
+        "id": s[0],
+        "name": s[1],
+        "latitude": s[2],
+        "longitude": s[3]
     }
+    for s in stations
+}
+
 
     reservations = get_all_reservations()
     minibus = get_all_minibus()
@@ -72,8 +73,8 @@ def run_optimization():
         stations_dict=stations_dict,
         matrice_distances=matrice_distances,
         matrice_durees=matrice_durees,
-        population_size=50,
-        generations=100
+        population_size=10,
+        generations=10
     )
 
     best_solution, best_details = ga.run()

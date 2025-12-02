@@ -12,6 +12,36 @@ class SolutionBuilder:
         self.matrice_distances = matrice_distances
         self.matrice_durees = matrice_durees
         self.stations_dict = stations_dict
+        # Construire un mapping station_id -> index (les matrices sont indexées
+        # par la position dans la liste `stations` utilisée lors de la création
+        # des matrices). On suppose que `stations_dict` a été construit dans
+        # le même ordre que la liste passée à `compute_cost_matrices`.
+        self.station_ids_order = list(stations_dict.keys())
+        self.station_id_to_index = {
+            sid: idx for idx, sid in enumerate(self.station_ids_order)
+        }
+        # Dépôt : par défaut, le premier élément de `stations_dict` (si présent)
+        self.depot_station_id = self.station_ids_order[0] if self.station_ids_order else 0
+
+    def _id_to_index(self, station_id):
+        """Retourne l'index de la station dans les matrices ou None."""
+        return self.station_id_to_index.get(station_id)
+
+    def _get_station_name(self, station_obj):
+        """Prend en charge station sous forme de dict ou d'objet."""
+        if station_obj is None:
+            return None
+        if isinstance(station_obj, dict):
+            return station_obj.get("name") or station_obj.get("station_name")
+        return getattr(station_obj, "name", None)
+
+    def _get_station_coords(self, station_obj):
+        """Retourne (latitude, longitude) depuis dict ou objet."""
+        if station_obj is None:
+            return None, None
+        if isinstance(station_obj, dict):
+            return station_obj.get("latitude"), station_obj.get("longitude")
+        return getattr(station_obj, "latitude", None), getattr(station_obj, "longitude", None)
     
     def generer_population_initiale(self, reservations, minibus, taille_population: int = 100) -> List[Solution]:
         """Génère une population initiale diverse"""
@@ -55,8 +85,8 @@ class SolutionBuilder:
         solution = Solution(minibus, reservations, self.stations_dict)
         reservations_non_assignees = list(reservations)
         
-        # Dépôt (supposons ID = 0 ou le premier dans le dict)
-        depot_id = 0  # Vous devez avoir un ID pour le dépôt
+        # Dépôt (prendre le premier ID présent dans `stations_dict`)
+        depot_id = self.depot_station_id
         
         for bus in minibus:
             capacite_restante = bus.capacity
@@ -69,9 +99,13 @@ class SolutionBuilder:
                 # Trouver la réservation la plus proche
                 for reservation in reservations_non_assignees:
                     if reservation.number_of_people <= capacite_restante:
-                        pickup_id = reservation.pickup_station_id
-                        distance = self.matrice_distances[position_actuelle_id][pickup_id]
-                        
+                        pickup_id = reservation.pickup_station
+                        idx_actuel = self._id_to_index(position_actuelle_id)
+                        idx_pickup = self._id_to_index(pickup_id)
+                        if idx_actuel is None or idx_pickup is None:
+                              continue  # skip si ID invalide
+
+                        distance = self.matrice_distances[idx_actuel][idx_pickup]
                         if distance < distance_min:
                             distance_min = distance
                             meilleure_reservation = reservation
@@ -80,7 +114,7 @@ class SolutionBuilder:
                 if meilleure_reservation:
                     solution.affectations[meilleure_reservation.id] = bus.id
                     capacite_restante -= meilleure_reservation.number_of_people
-                    position_actuelle_id = meilleure_reservation.pickup_station_id
+                    position_actuelle_id = meilleure_reservation.pickup_station
                     reservations_non_assignees.remove(meilleure_reservation)
                 else:
                     break
@@ -100,11 +134,15 @@ class SolutionBuilder:
         # Calculer les centres des réservations
         centres = []
         for reservation in reservations:
-            pickup = self.stations_dict[reservation.pickup_station_id]
-            dropoff = self.stations_dict[reservation.dropoff_station_id]
-            
-            centre_lat = (pickup.latitude + dropoff.latitude) / 2
-            centre_lon = (pickup.longitude + dropoff.longitude) / 2
+            pickup_obj = self.stations_dict.get(reservation.pickup_station)
+            dropoff_obj = self.stations_dict.get(reservation.dropoff_station)
+            lat1, lon1 = self._get_station_coords(pickup_obj)
+            lat2, lon2 = self._get_station_coords(dropoff_obj)
+            if lat1 is None or lat2 is None or lon1 is None or lon2 is None:
+                # skip reservations with missing station coords
+                continue
+            centre_lat = (lat1 + lat2) / 2
+            centre_lon = (lon1 + lon2) / 2
             centres.append([centre_lat, centre_lon])
         
         # Clustering K-Means
@@ -136,8 +174,8 @@ class SolutionBuilder:
     
     def construire_itineraires(self, solution: Solution):
         """Construit les itinéraires détaillés pour chaque minibus"""
-        depot_id = 0  # ID du dépôt
-        depot_name = "Depot"
+        depot_id = self.depot_station_id
+        depot_name = self._get_station_name(self.stations_dict.get(depot_id)) or "Depot"
         
         for minibus in solution.minibus_list:
             minibus_id = minibus.id
@@ -160,10 +198,11 @@ class SolutionBuilder:
             
             # Ajouter tous les pickups
             for reservation in reservations_minibus:
-                pickup_station = self.stations_dict[reservation.pickup_station_id]
+                pickup_obj = self.stations_dict.get(reservation.pickup_station)
+                station_name = self._get_station_name(pickup_obj) or str(reservation.pickup_station)
                 arrets.append(Arret(
-                    station_id=reservation.pickup_station_id,
-                    station_name=pickup_station.name,
+                    station_id=reservation.pickup_station,
+                    station_name=station_name,
                     type="PICKUP",
                     reservation_id=reservation.id,
                     personnes=reservation.number_of_people
@@ -171,10 +210,11 @@ class SolutionBuilder:
             
             # Ajouter tous les dropoffs
             for reservation in reservations_minibus:
-                dropoff_station = self.stations_dict[reservation.dropoff_station_id]
+                dropoff_obj = self.stations_dict.get(reservation.dropoff_station)
+                station_name = self._get_station_name(dropoff_obj) or str(reservation.dropoff_station)
                 arrets.append(Arret(
-                    station_id=reservation.dropoff_station_id,
-                    station_name=dropoff_station.name,
+                    station_id=reservation.dropoff_station,
+                    station_name=station_name,
                     type="DROPOFF",
                     reservation_id=reservation.id,
                     personnes=reservation.number_of_people

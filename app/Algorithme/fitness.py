@@ -11,7 +11,8 @@ class FitnessCalculator:
         self.matrice_distances = matrice_distances
         self.matrice_durees = matrice_durees
         self.stations_dict = stations_dict
-        
+        self.station_ids_order = list(stations_dict.keys())
+        self.station_id_to_index = {sid: idx for idx, sid in enumerate(self.station_ids_order)}
         # Poids des pénalités
         self.PENALITE_CAPACITE = 10000
         self.PENALITE_RESERVATION_NON_SERVIE = 50000
@@ -101,17 +102,29 @@ class FitnessCalculator:
             arret = itineraire.arrets[i]
             
             # Calculer distance et durée depuis l'arrêt précédent
-            if i > 0:
-                arret_precedent = itineraire.arrets[i-1]
+            # Calculer distance et durée depuis l'arrêt précédent
+        if i > 0:
+            arret_precedent = itineraire.arrets[i-1]
+    
+            idx_precedent = self.station_id_to_index.get(arret_precedent.station_id)
+            idx_courant = self.station_id_to_index.get(arret.station_id)
+
+            if idx_precedent is None or idx_courant is None:
+        # Ignorer si ID invalide
+                dist = 0
+                duree = 0
+            else:
+                dist = self.matrice_distances[idx_precedent][idx_courant]
+                duree = self.matrice_durees[idx_precedent][idx_courant]
+
+            distance_totale += dist
+            duree_totale += duree
+
+            arret.distance_depuis_precedent = dist   # Convertir en km
+            arret.duree_depuis_precedent = duree     # Convertir en minutes
+
                 
-                dist = self.matrice_distances[arret_precedent.station_id][arret.station_id]
-                duree = self.matrice_durees[arret_precedent.station_id][arret.station_id]
-                
-                distance_totale += dist
-                duree_totale += duree
-                
-                arret.distance_depuis_precedent = dist / 1000  # Convertir en km
-                arret.duree_depuis_precedent = duree / 60  # Convertir en minutes
+            
             
             # Gérer les passagers
             if arret.type == "PICKUP":

@@ -1,5 +1,5 @@
-from app.database.crud import get_all_minibus
+from app.database.crud import get_all_stations
 
-minibus = get_all_minibus()
-print("Nombre de minibus :", len(minibus))
-print(minibus)
+station = get_all_stations()
+print("Nombre de minibus :", len(station))
+print(station)
