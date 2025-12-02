@@ -35,7 +35,9 @@ class Client(Base):
     email = Column(String, unique=True, index=True)
     phone = Column(String)
     password = Column(String)
+    role = Column(String, default="chauffeur")  # <-- AJOUTÉ
     created_at = Column(DateTime, default=datetime.utcnow)
+
 
 # Modèles Pydantic
 class LoginRequest(BaseModel):
@@ -47,6 +49,7 @@ class UserResponse(BaseModel):
     email: str
     first_name: Optional[str]
     last_name: Optional[str]
+    role: str
     
     class Config:
         from_attributes = True
@@ -137,7 +140,8 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
             id=user.id,
             email=user.email,
             first_name=user.first_name,
-            last_name=user.last_name
+            last_name=user.last_name,
+            role=user.role
         )
     )
 
