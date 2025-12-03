@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_0e8fccab7af6b3be9a00040849dc03ff {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+
+            <style>html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            </style>
+
+            <style>#map {
+                position:absolute;
+                top:0;
+                bottom:0;
+                right:0;
+                left:0;
+                }
+            </style>
+
+            <script>
+                L_NO_TOUCH = false;
+                L_DISABLE_3D = false;
+            </script>
+
+        
+</head>
+<body>
+    
+    
+        <div style="position: fixed; 
+                    top: 10px; right: 10px; 
+                    width: 250px; height: auto; 
+                    background-color: white; 
+                    border:2px solid grey; 
+                    z-index:9999; 
+                    font-size:14px;
+                    padding: 10px">
+        <p style="margin:0; font-weight:bold;">Légende des Minibus</p>
+        <hr style="margin: 5px 0;">
+        
+            <p style="margin: 5px 0;">
+                <span style="background-color:red; 
+                             width: 20px; 
+                             height: 10px; 
+                             display: inline-block;
+                             border: 1px solid black;">
+                </span> 
+                M-1234-AB
+            </p>
+            
+            <p style="margin: 5px 0;">
+                <span style="background-color:blue; 
+                             width: 20px; 
+                             height: 10px; 
+                             display: inline-block;
+                             border: 1px solid black;">
+                </span> 
+                M-5678-CD
+            </p>
+            
+            <p style="margin: 5px 0;">
+                <span style="background-color:green; 
+                             width: 20px; 
+                             height: 10px; 
+                             display: inline-block;
+                             border: 1px solid black;">
+                </span> 
+                M-9012-EF
+            </p>
+            
+            <p style="margin: 5px 0;">
+                <span style="background-color:purple; 
+                             width: 20px; 
+                             height: 10px; 
+                             display: inline-block;
+                             border: 1px solid black;">
+                </span> 
+                M-3456-GH
+            </p>
+            
+            <p style="margin: 5px 0;">
+                <span style="background-color:orange; 
+                             width: 20px; 
+                             height: 10px; 
+                             display: inline-block;
+                             border: 1px solid black;">
+                </span> 
+                M-7890-IJ
+            </p>
+            
+        <hr style="margin: 5px 0;">
+        <p style="margin: 5px 0;"><span style="color:green;">🟢</span> Pickup</p>
+        <p style="margin: 5px 0;"><span style="color:red;">🔴</span> Dropoff</p>
+        <p style="margin: 5px 0;"><span style="color:black;">🏢</span> Dépôt</p>
+        </div>
+        
+    
+            <div class="folium-map" id="map_0e8fccab7af6b3be9a00040849dc03ff" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_0e8fccab7af6b3be9a00040849dc03ff = L.map(
+                "map_0e8fccab7af6b3be9a00040849dc03ff",
+                {
+                    center: [31.6295, -7.9811],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 12,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_c60e9f77e446466b992ce72847eebd70 = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 19,
+  "maxNativeZoom": 19,
+  "noWrap": false,
+  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_c60e9f77e446466b992ce72847eebd70.addTo(map_0e8fccab7af6b3be9a00040849dc03ff);
+        
+    
+            var poly_line_cd5acc566c2ac5d2173abdfc0af8eaa1 = L.polyline(
+                [[31.6308, -8.0027], [31.6308, -8.0027], [31.6308, -8.0027], [31.6364, -8.0103], [31.6364, -8.0103], [31.6364, -8.0103], [31.6308, -8.0027], [31.6111, -8.0292], [31.6069, -8.0363], [31.6708, -7.9736], [31.6308, -8.0027]],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "red", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.7, "smoothFactor": 1.0, "stroke": true, "weight": 4}
+            ).addTo(map_0e8fccab7af6b3be9a00040849dc03ff);
+        
+    
+        var popup_74f57f3b2f2844b24330d9a7c6b7c114 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_431ac1adffb26cae216ebd8a06d2166d = $(`<div id="html_431ac1adffb26cae216ebd8a06d2166d" style="width: 100.0%; height: 100.0%;"><b>Minibus 1</b><br>Plaque: M-9012-EF<br>Distance: 33.45 km<br>Durée: 58.9 min<br>Charge max: 8/22</div>`)[0];
+                popup_74f57f3b2f2844b24330d9a7c6b7c114.setContent(html_431ac1adffb26cae216ebd8a06d2166d);
+            
+        
+
+        poly_line_cd5acc566c2ac5d2173abdfc0af8eaa1.bindPopup(popup_74f57f3b2f2844b24330d9a7c6b7c114)
+        ;
+
+        
+    
+    
+            var marker_e24772d4b9265000fc06e6d7b6693a6b = L.marker(
+                [31.6308, -8.0027],
+                {
+}
+            ).addTo(map_0e8fccab7af6b3be9a00040849dc03ff);
+        
+    
+            var icon_6ea8a9d71ee6bc8b0fa66bd1c326972a = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "black",
+  "iconColor": "white",
+  "icon": "home",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_23f6b88d227dcf03bb3ce089c23c8606 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_481be2d6e30bb584d18ec65caedae51b = $(`<div id="html_481be2d6e30bb584d18ec65caedae51b" style="width: 100.0%; height: 100.0%;">             <div style='width: 200px'>                 <b>Arrêt #1</b><br>                 <b>Station:</b> Gare Marrakech<br>                 <b>Type:</b> DEPOT<br>                 <b>Passagers à bord:</b> 0<br>             <b>Minibus:</b> M-9012-EF</div></div>`)[0];
+                popup_23f6b88d227dcf03bb3ce089c23c8606.setContent(html_481be2d6e30bb584d18ec65caedae51b);
+            
+        
+
+        marker_e24772d4b9265000fc06e6d7b6693a6b.bindPopup(popup_23f6b88d227dcf03bb3ce089c23c8606)
+        ;
+
+        
+    
+    
+            marker_e24772d4b9265000fc06e6d7b6693a6b.bindTooltip(
+                `<div>
+                     #1 - Gare Marrakech
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_e24772d4b9265000fc06e6d7b6693a6b.setIcon(icon_6ea8a9d71ee6bc8b0fa66bd1c326972a);
+            
+    
+            var circle_marker_9188a169caa56d3e5d36bcac590c17d6 = L.circleMarker(
+                [31.6308, -8.0027],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 0.8, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 15, "stroke": true, "weight": 3}
+            ).addTo(map_0e8fccab7af6b3be9a00040849dc03ff);
+        
+    
+        var popup_50056d1681a898f9815022d99986dbe3 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_2e423ba781dfce23c332dd5253403be8 = $(`<div id="html_2e423ba781dfce23c332dd5253403be8" style="width: 100.0%; height: 100.0%;">Arrêt #1</div>`)[0];
+                popup_50056d1681a898f9815022d99986dbe3.setContent(html_2e423ba781dfce23c332dd5253403be8);
+            
+        
+
+        circle_marker_9188a169caa56d3e5d36bcac590c17d6.bindPopup(popup_50056d1681a898f9815022d99986dbe3)
+        ;
+
+        
+    
+    
+            var marker_59866ec83450bc65c7ebabada91030fa = L.marker(
+                [31.6308, -8.0027],
+                {
+}
+            ).addTo(map_0e8fccab7af6b3be9a00040849dc03ff);
+        
+    
+            var icon_06a2ea29ee834fab6c82cfd5e036f836 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "green",
+  "iconColor": "white",
+  "icon": "arrow-up",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_1445e05483442d68738cb88c1b1313c1 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_e69cb5333ccbf6b82b78e753f7166e7d = $(`<div id="html_e69cb5333ccbf6b82b78e753f7166e7d" style="width: 100.0%; height: 100.0%;">             <div style='width: 200px'>                 <b>Arrêt #2</b><br>                 <b>Station:</b> Gare Marrakech<br>                 <b>Type:</b> PICKUP<br>                 <b>Passagers à bord:</b> 2<br>             <b>Réservation:</b> #2<br><b>Minibus:</b> M-9012-EF</div></div>`)[0];
+                popup_1445e05483442d68738cb88c1b1313c1.setContent(html_e69cb5333ccbf6b82b78e753f7166e7d);
+            
+        
+
+        marker_59866ec83450bc65c7ebabada91030fa.bindPopup(popup_1445e05483442d68738cb88c1b1313c1)
+        ;
+
+        
+    
+    
+            marker_59866ec83450bc65c7ebabada91030fa.bindTooltip(
+                `<div>
+                     #2 - Gare Marrakech
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_59866ec83450bc65c7ebabada91030fa.setIcon(icon_06a2ea29ee834fab6c82cfd5e036f836);
+            
+    
+            var circle_marker_af2941f82d131f112ca619896a683403 = L.circleMarker(
+                [31.6308, -8.0027],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 0.8, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 15, "stroke": true, "weight": 3}
+            ).addTo(map_0e8fccab7af6b3be9a00040849dc03ff);
+        
+    
+        var popup_25a4e1168629be90c54f48222a9cb31d = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_60120b93d8a40645c13e5aa5ddb6f99b = $(`<div id="html_60120b93d8a40645c13e5aa5ddb6f99b" style="width: 100.0%; height: 100.0%;">Arrêt #2</div>`)[0];
+                popup_25a4e1168629be90c54f48222a9cb31d.setContent(html_60120b93d8a40645c13e5aa5ddb6f99b);
+            
+        
+
+        circle_marker_af2941f82d131f112ca619896a683403.bindPopup(popup_25a4e1168629be90c54f48222a9cb31d)
+        ;
+
+        
+    
+    
+            var marker_edf6ebe5e53e4853ef88eed23b473a6e = L.marker(
+                [31.6308, -8.0027],
+                {
+}
+            ).addTo(map_0e8fccab7af6b3be9a00040849dc03ff);
+        
+    
+            var icon_dadc4b98894e472c62cb520e150c54cc = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "green",
+  "iconColor": "white",
+  "icon": "arrow-up",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_2b88e92bc29282de975b1e66ab9c9ab8 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_f1f16696238d77cd4b7a30f92f81ccff = $(`<div id="html_f1f16696238d77cd4b7a30f92f81ccff" style="width: 100.0%; height: 100.0%;">             <div style='width: 200px'>                 <b>Arrêt #3</b><br>                 <b>Station:</b> Gare Marrakech<br>                 <b>Type:</b> PICKUP<br>                 <b>Passagers à bord:</b> 4<br>             <b>Réservation:</b> #2<br><b>Minibus:</b> M-9012-EF</div></div>`)[0];
+                popup_2b88e92bc29282de975b1e66ab9c9ab8.setContent(html_f1f16696238d77cd4b7a30f92f81ccff);
+            
+        
+
+        marker_edf6ebe5e53e4853ef88eed23b473a6e.bindPopup(popup_2b88e92bc29282de975b1e66ab9c9ab8)
+        ;
+
+        
+    
+    
+            marker_edf6ebe5e53e4853ef88eed23b473a6e.bindTooltip(
+                `<div>
+                     #3 - Gare Marrakech
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_edf6ebe5e53e4853ef88eed23b473a6e.setIcon(icon_dadc4b98894e472c62cb520e150c54cc);
+            
+    
+            var circle_marker_c9c41eae2ef0a32881544b189f4e7d5b = L.circleMarker(
+                [31.6308, -8.0027],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 0.8, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 15, "stroke": true, "weight": 3}
+            ).addTo(map_0e8fccab7af6b3be9a00040849dc03ff);
+        
+    
+        var popup_4a88181ae8011cf5f78e10e91b47374f = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_7a02f572abb286affcb1e6b6e9c7445f = $(`<div id="html_7a02f572abb286affcb1e6b6e9c7445f" style="width: 100.0%; height: 100.0%;">Arrêt #3</div>`)[0];
+                popup_4a88181ae8011cf5f78e10e91b47374f.setContent(html_7a02f572abb286affcb1e6b6e9c7445f);
+            
+        
+
+        circle_marker_c9c41eae2ef0a32881544b189f4e7d5b.bindPopup(popup_4a88181ae8011cf5f78e10e91b47374f)
+        ;
+
+        
+    
+    
+            var marker_cb945e210a321979a90d448b7d8f9e1c = L.marker(
+                [31.6364, -8.0103],
+                {
+}
+            ).addTo(map_0e8fccab7af6b3be9a00040849dc03ff);
+        
+    
+            var icon_8fdcdbdadd62fb992f304e66fd863475 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "green",
+  "iconColor": "white",
+  "icon": "arrow-up",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_bfe1cd00ebdcc9438f53a1da2faf6350 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_13e6f47185daca9618fdc15acb3d850b = $(`<div id="html_13e6f47185daca9618fdc15acb3d850b" style="width: 100.0%; height: 100.0%;">             <div style='width: 200px'>                 <b>Arrêt #4</b><br>                 <b>Station:</b> Gueliz<br>                 <b>Type:</b> PICKUP<br>                 <b>Passagers à bord:</b> 5<br>             <b>Réservation:</b> #5<br><b>Minibus:</b> M-9012-EF</div></div>`)[0];
+                popup_bfe1cd00ebdcc9438f53a1da2faf6350.setContent(html_13e6f47185daca9618fdc15acb3d850b);
+            
+        
+
+        marker_cb945e210a321979a90d448b7d8f9e1c.bindPopup(popup_bfe1cd00ebdcc9438f53a1da2faf6350)
+        ;
+
+        
+    
+    
+            marker_cb945e210a321979a90d448b7d8f9e1c.bindTooltip(
+                `<div>
+                     #4 - Gueliz
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_cb945e210a321979a90d448b7d8f9e1c.setIcon(icon_8fdcdbdadd62fb992f304e66fd863475);
+            
+    
+            var circle_marker_d5369f9680f702a478e042ea8f704f87 = L.circleMarker(
+                [31.6364, -8.0103],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 0.8, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 15, "stroke": true, "weight": 3}
+            ).addTo(map_0e8fccab7af6b3be9a00040849dc03ff);
+        
+    
+        var popup_aee3a15e24252c3a98f751e1a51c4e02 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_9fffd03f63139261db137a6bf11d450d = $(`<div id="html_9fffd03f63139261db137a6bf11d450d" style="width: 100.0%; height: 100.0%;">Arrêt #4</div>`)[0];
+                popup_aee3a15e24252c3a98f751e1a51c4e02.setContent(html_9fffd03f63139261db137a6bf11d450d);
+            
+        
+
+        circle_marker_d5369f9680f702a478e042ea8f704f87.bindPopup(popup_aee3a15e24252c3a98f751e1a51c4e02)
+        ;
+
+        
+    
+    
+            var marker_07c612153de16bdacdf33f5e57e46af3 = L.marker(
+                [31.6364, -8.0103],
+                {
+}
+            ).addTo(map_0e8fccab7af6b3be9a00040849dc03ff);
+        
+    
+            var icon_ee33e9e3fdf7e19a7cf13bf696052493 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "green",
+  "iconColor": "white",
+  "icon": "arrow-up",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_6b8615658a8906f077dd178ebab1c3d0 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_e3af0f99a42a6b268ba7dee9256aff85 = $(`<div id="html_e3af0f99a42a6b268ba7dee9256aff85" style="width: 100.0%; height: 100.0%;">             <div style='width: 200px'>                 <b>Arrêt #5</b><br>                 <b>Station:</b> Gueliz<br>                 <b>Type:</b> PICKUP<br>                 <b>Passagers à bord:</b> 6<br>             <b>Réservation:</b> #5<br><b>Minibus:</b> M-9012-EF</div></div>`)[0];
+                popup_6b8615658a8906f077dd178ebab1c3d0.setContent(html_e3af0f99a42a6b268ba7dee9256aff85);
+            
+        
+
+        marker_07c612153de16bdacdf33f5e57e46af3.bindPopup(popup_6b8615658a8906f077dd178ebab1c3d0)
+        ;
+
+        
+    
+    
+            marker_07c612153de16bdacdf33f5e57e46af3.bindTooltip(
+                `<div>
+                     #5 - Gueliz
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_07c612153de16bdacdf33f5e57e46af3.setIcon(icon_ee33e9e3fdf7e19a7cf13bf696052493);
+            
+    
+            var circle_marker_dfd1d14f5f64be46533be1b15ce9efec = L.circleMarker(
+                [31.6364, -8.0103],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 0.8, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 15, "stroke": true, "weight": 3}
+            ).addTo(map_0e8fccab7af6b3be9a00040849dc03ff);
+        
+    
+        var popup_86fe555634dfbb630bd5ebf9ed10b728 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_9a002b1c73ac2fb85d9c70530df58782 = $(`<div id="html_9a002b1c73ac2fb85d9c70530df58782" style="width: 100.0%; height: 100.0%;">Arrêt #5</div>`)[0];
+                popup_86fe555634dfbb630bd5ebf9ed10b728.setContent(html_9a002b1c73ac2fb85d9c70530df58782);
+            
+        
+
+        circle_marker_dfd1d14f5f64be46533be1b15ce9efec.bindPopup(popup_86fe555634dfbb630bd5ebf9ed10b728)
+        ;
+
+        
+    
+    
+            var marker_42d7ddf281d45c9976f1a6a4a138b0b5 = L.marker(
+                [31.6364, -8.0103],
+                {
+}
+            ).addTo(map_0e8fccab7af6b3be9a00040849dc03ff);
+        
+    
+            var icon_c343e9b07cba5e91e6f1923dc5d6857b = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "green",
+  "iconColor": "white",
+  "icon": "arrow-up",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_b559de37e6a6e5a15be3aa1d0fda5f70 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_04336a7efaea1099e32da3cf9b7809d2 = $(`<div id="html_04336a7efaea1099e32da3cf9b7809d2" style="width: 100.0%; height: 100.0%;">             <div style='width: 200px'>                 <b>Arrêt #6</b><br>                 <b>Station:</b> Gueliz<br>                 <b>Type:</b> PICKUP<br>                 <b>Passagers à bord:</b> 7<br>             <b>Réservation:</b> #5<br><b>Minibus:</b> M-9012-EF</div></div>`)[0];
+                popup_b559de37e6a6e5a15be3aa1d0fda5f70.setContent(html_04336a7efaea1099e32da3cf9b7809d2);
+            
+        
+
+        marker_42d7ddf281d45c9976f1a6a4a138b0b5.bindPopup(popup_b559de37e6a6e5a15be3aa1d0fda5f70)
+        ;
+
+        
+    
+    
+            marker_42d7ddf281d45c9976f1a6a4a138b0b5.bindTooltip(
+                `<div>
+                     #6 - Gueliz
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_42d7ddf281d45c9976f1a6a4a138b0b5.setIcon(icon_c343e9b07cba5e91e6f1923dc5d6857b);
+            
+    
+            var circle_marker_3b62ac5347ddfe42ac033f9f81387dc0 = L.circleMarker(
+                [31.6364, -8.0103],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 0.8, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 15, "stroke": true, "weight": 3}
+            ).addTo(map_0e8fccab7af6b3be9a00040849dc03ff);
+        
+    
+        var popup_e4ba51e817009177ee5c0063a55dc4cb = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_f923239b4e5b2a51763fd34bba504008 = $(`<div id="html_f923239b4e5b2a51763fd34bba504008" style="width: 100.0%; height: 100.0%;">Arrêt #6</div>`)[0];
+                popup_e4ba51e817009177ee5c0063a55dc4cb.setContent(html_f923239b4e5b2a51763fd34bba504008);
+            
+        
+
+        circle_marker_3b62ac5347ddfe42ac033f9f81387dc0.bindPopup(popup_e4ba51e817009177ee5c0063a55dc4cb)
+        ;
+
+        
+    
+    
+            var marker_502f7994c68d3c7793dbb1617be01f68 = L.marker(
+                [31.6308, -8.0027],
+                {
+}
+            ).addTo(map_0e8fccab7af6b3be9a00040849dc03ff);
+        
+    
+            var icon_c71c56544d4747d513f3073d49999b55 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "arrow-down",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_52fc11b0f5af9320c1ba7ea7fdfa168a = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_32a745f407270ff7ffcb37ac2511bf42 = $(`<div id="html_32a745f407270ff7ffcb37ac2511bf42" style="width: 100.0%; height: 100.0%;">             <div style='width: 200px'>                 <b>Arrêt #7</b><br>                 <b>Station:</b> Gare Marrakech<br>                 <b>Type:</b> DROPOFF<br>                 <b>Passagers à bord:</b> 6<br>             <b>Réservation:</b> #5<br><b>Minibus:</b> M-9012-EF</div></div>`)[0];
+                popup_52fc11b0f5af9320c1ba7ea7fdfa168a.setContent(html_32a745f407270ff7ffcb37ac2511bf42);
+            
+        
+
+        marker_502f7994c68d3c7793dbb1617be01f68.bindPopup(popup_52fc11b0f5af9320c1ba7ea7fdfa168a)
+        ;
+
+        
+    
+    
+            marker_502f7994c68d3c7793dbb1617be01f68.bindTooltip(
+                `<div>
+                     #7 - Gare Marrakech
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_502f7994c68d3c7793dbb1617be01f68.setIcon(icon_c71c56544d4747d513f3073d49999b55);
+            
+    
+            var circle_marker_a8a03ec64a2758d9606d8948ef0c99a8 = L.circleMarker(
+                [31.6308, -8.0027],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 0.8, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 15, "stroke": true, "weight": 3}
+            ).addTo(map_0e8fccab7af6b3be9a00040849dc03ff);
+        
+    
+        var popup_4348d55248782801bf21ff063884b655 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_76dc444020e3866af3c889119b83a6a9 = $(`<div id="html_76dc444020e3866af3c889119b83a6a9" style="width: 100.0%; height: 100.0%;">Arrêt #7</div>`)[0];
+                popup_4348d55248782801bf21ff063884b655.setContent(html_76dc444020e3866af3c889119b83a6a9);
+            
+        
+
+        circle_marker_a8a03ec64a2758d9606d8948ef0c99a8.bindPopup(popup_4348d55248782801bf21ff063884b655)
+        ;
+
+        
+    
+    
+            var marker_254b97b33a6f3e9bc0c3ae953ba20cb5 = L.marker(
+                [31.6111, -8.0292],
+                {
+}
+            ).addTo(map_0e8fccab7af6b3be9a00040849dc03ff);
+        
+    
+            var icon_d6fd96381182774828428f72be463339 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "green",
+  "iconColor": "white",
+  "icon": "arrow-up",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_ae6186dbc0535f91e07ba44432e31115 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_9ef61e87752db23cd4904bbc9bda8b5c = $(`<div id="html_9ef61e87752db23cd4904bbc9bda8b5c" style="width: 100.0%; height: 100.0%;">             <div style='width: 200px'>                 <b>Arrêt #8</b><br>                 <b>Station:</b> Ménara<br>                 <b>Type:</b> PICKUP<br>                 <b>Passagers à bord:</b> 8<br>             <b>Réservation:</b> #6<br><b>Minibus:</b> M-9012-EF</div></div>`)[0];
+                popup_ae6186dbc0535f91e07ba44432e31115.setContent(html_9ef61e87752db23cd4904bbc9bda8b5c);
+            
+        
+
+        marker_254b97b33a6f3e9bc0c3ae953ba20cb5.bindPopup(popup_ae6186dbc0535f91e07ba44432e31115)
+        ;
+
+        
+    
+    
+            marker_254b97b33a6f3e9bc0c3ae953ba20cb5.bindTooltip(
+                `<div>
+                     #8 - Ménara
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_254b97b33a6f3e9bc0c3ae953ba20cb5.setIcon(icon_d6fd96381182774828428f72be463339);
+            
+    
+            var circle_marker_34d814cc0d9ce6a177d3b7b46f897547 = L.circleMarker(
+                [31.6111, -8.0292],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 0.8, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 15, "stroke": true, "weight": 3}
+            ).addTo(map_0e8fccab7af6b3be9a00040849dc03ff);
+        
+    
+        var popup_618857926e22dd889cb96666c67913f8 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_eb2289246a40315a3a204c0baccad7bf = $(`<div id="html_eb2289246a40315a3a204c0baccad7bf" style="width: 100.0%; height: 100.0%;">Arrêt #8</div>`)[0];
+                popup_618857926e22dd889cb96666c67913f8.setContent(html_eb2289246a40315a3a204c0baccad7bf);
+            
+        
+
+        circle_marker_34d814cc0d9ce6a177d3b7b46f897547.bindPopup(popup_618857926e22dd889cb96666c67913f8)
+        ;
+
+        
+    
+    
+            var marker_4a206f3a8bc3945ee7449691f1dcd62d = L.marker(
+                [31.6069, -8.0363],
+                {
+}
+            ).addTo(map_0e8fccab7af6b3be9a00040849dc03ff);
+        
+    
+            var icon_3e56f8120427ee6702e523b2a8688010 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "arrow-down",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_ea50cf9dfded38c89f4d903414f9b9ff = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_8aa48e147fb651cbf48839269aa8031f = $(`<div id="html_8aa48e147fb651cbf48839269aa8031f" style="width: 100.0%; height: 100.0%;">             <div style='width: 200px'>                 <b>Arrêt #9</b><br>                 <b>Station:</b> Aéroport Marrakech<br>                 <b>Type:</b> DROPOFF<br>                 <b>Passagers à bord:</b> 6<br>             <b>Réservation:</b> #2<br><b>Minibus:</b> M-9012-EF</div></div>`)[0];
+                popup_ea50cf9dfded38c89f4d903414f9b9ff.setContent(html_8aa48e147fb651cbf48839269aa8031f);
+            
+        
+
+        marker_4a206f3a8bc3945ee7449691f1dcd62d.bindPopup(popup_ea50cf9dfded38c89f4d903414f9b9ff)
+        ;
+
+        
+    
+    
+            marker_4a206f3a8bc3945ee7449691f1dcd62d.bindTooltip(
+                `<div>
+                     #9 - Aéroport Marrakech
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_4a206f3a8bc3945ee7449691f1dcd62d.setIcon(icon_3e56f8120427ee6702e523b2a8688010);
+            
+    
+            var circle_marker_526b1cdec149872b06f53c717f722059 = L.circleMarker(
+                [31.6069, -8.0363],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 0.8, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 15, "stroke": true, "weight": 3}
+            ).addTo(map_0e8fccab7af6b3be9a00040849dc03ff);
+        
+    
+        var popup_de8c61f09c02b337093d4f1ff14a4db4 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_f575d1c2c96aae1c515dd4e88d9fd3ca = $(`<div id="html_f575d1c2c96aae1c515dd4e88d9fd3ca" style="width: 100.0%; height: 100.0%;">Arrêt #9</div>`)[0];
+                popup_de8c61f09c02b337093d4f1ff14a4db4.setContent(html_f575d1c2c96aae1c515dd4e88d9fd3ca);
+            
+        
+
+        circle_marker_526b1cdec149872b06f53c717f722059.bindPopup(popup_de8c61f09c02b337093d4f1ff14a4db4)
+        ;
+
+        
+    
+    
+            var marker_bacd37c03e5dd72c15a915cde0a12bc9 = L.marker(
+                [31.6708, -7.9736],
+                {
+}
+            ).addTo(map_0e8fccab7af6b3be9a00040849dc03ff);
+        
+    
+            var icon_6d667d3c2f602710dfbd073f3f303a78 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "arrow-down",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_cfecd20d91b99078fb69716150d4f2c4 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_34c52d27dbbd9c82dc4ae3b9884120ad = $(`<div id="html_34c52d27dbbd9c82dc4ae3b9884120ad" style="width: 100.0%; height: 100.0%;">             <div style='width: 200px'>                 <b>Arrêt #10</b><br>                 <b>Station:</b> Palmeraie<br>                 <b>Type:</b> DROPOFF<br>                 <b>Passagers à bord:</b> 4<br>             <b>Réservation:</b> #6<br><b>Minibus:</b> M-9012-EF</div></div>`)[0];
+                popup_cfecd20d91b99078fb69716150d4f2c4.setContent(html_34c52d27dbbd9c82dc4ae3b9884120ad);
+            
+        
+
+        marker_bacd37c03e5dd72c15a915cde0a12bc9.bindPopup(popup_cfecd20d91b99078fb69716150d4f2c4)
+        ;
+
+        
+    
+    
+            marker_bacd37c03e5dd72c15a915cde0a12bc9.bindTooltip(
+                `<div>
+                     #10 - Palmeraie
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_bacd37c03e5dd72c15a915cde0a12bc9.setIcon(icon_6d667d3c2f602710dfbd073f3f303a78);
+            
+    
+            var circle_marker_8d3f61b2283612d5394d272555e41173 = L.circleMarker(
+                [31.6708, -7.9736],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 0.8, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 15, "stroke": true, "weight": 3}
+            ).addTo(map_0e8fccab7af6b3be9a00040849dc03ff);
+        
+    
+        var popup_b43328462f7cf602d30f70a9dbad0d93 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_7a60b3701f305b70f780ee8de19d3031 = $(`<div id="html_7a60b3701f305b70f780ee8de19d3031" style="width: 100.0%; height: 100.0%;">Arrêt #10</div>`)[0];
+                popup_b43328462f7cf602d30f70a9dbad0d93.setContent(html_7a60b3701f305b70f780ee8de19d3031);
+            
+        
+
+        circle_marker_8d3f61b2283612d5394d272555e41173.bindPopup(popup_b43328462f7cf602d30f70a9dbad0d93)
+        ;
+
+        
+    
+    
+            var marker_087061f7272e868eedb9f2fddadcb681 = L.marker(
+                [31.6308, -8.0027],
+                {
+}
+            ).addTo(map_0e8fccab7af6b3be9a00040849dc03ff);
+        
+    
+            var icon_ff9d14279716702d2200503b81130cc7 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "black",
+  "iconColor": "white",
+  "icon": "home",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_ad9cd6a2443f977460d4a650e4494d47 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_08bb36d89c0c292882f03d173c047419 = $(`<div id="html_08bb36d89c0c292882f03d173c047419" style="width: 100.0%; height: 100.0%;">             <div style='width: 200px'>                 <b>Arrêt #11</b><br>                 <b>Station:</b> Gare Marrakech<br>                 <b>Type:</b> DEPOT<br>                 <b>Passagers à bord:</b> 4<br>             <b>Minibus:</b> M-9012-EF</div></div>`)[0];
+                popup_ad9cd6a2443f977460d4a650e4494d47.setContent(html_08bb36d89c0c292882f03d173c047419);
+            
+        
+
+        marker_087061f7272e868eedb9f2fddadcb681.bindPopup(popup_ad9cd6a2443f977460d4a650e4494d47)
+        ;
+
+        
+    
+    
+            marker_087061f7272e868eedb9f2fddadcb681.bindTooltip(
+                `<div>
+                     #11 - Gare Marrakech
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_087061f7272e868eedb9f2fddadcb681.setIcon(icon_ff9d14279716702d2200503b81130cc7);
+            
+    
+            var circle_marker_168eea9912cbbad3ff35aee80c1acaae = L.circleMarker(
+                [31.6308, -8.0027],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 0.8, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 15, "stroke": true, "weight": 3}
+            ).addTo(map_0e8fccab7af6b3be9a00040849dc03ff);
+        
+    
+        var popup_b16ddb3f91e23b5b064686e47f6168ef = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_654e352093cb3a6e49b131be67acb7a3 = $(`<div id="html_654e352093cb3a6e49b131be67acb7a3" style="width: 100.0%; height: 100.0%;">Arrêt #11</div>`)[0];
+                popup_b16ddb3f91e23b5b064686e47f6168ef.setContent(html_654e352093cb3a6e49b131be67acb7a3);
+            
+        
+
+        circle_marker_168eea9912cbbad3ff35aee80c1acaae.bindPopup(popup_b16ddb3f91e23b5b064686e47f6168ef)
+        ;
+
+        
+    
+</script>
+</html>
