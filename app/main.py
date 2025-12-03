@@ -6,40 +6,46 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
-from jose import JWTError, jwt
-from fastapi import FastAPI
-from app.internal.route_service import router as route_service_router
+from jose import jwt
 from typing import Optional
+from app.internal.route_service import router as route_service_router
 
-app = FastAPI()
+# -------------------------------------------------
+# ⚠️ FASTAPI INSTANCE (1 seule fois)
+# -------------------------------------------------
+app = FastAPI(title="Minibus Route Optimization API")
 app.include_router(route_service_router)
 
-# Configuration de la base de données
+# -------------------------------------------------
+# CONFIG DATABASE
+# -------------------------------------------------
 DATABASE_URL = "postgresql://admin:admin@localhost:5432/projet_minibus"
 SECRET_KEY = "your-secret-key-change-this-in-production"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-# Base de données
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-# Modèle de base de données
-class Client(Base):
-    __tablename__ = "clients"
-    
+# -------------------------------------------------
+# MODEL User (correspond exactement à ta table SQL)
+# -------------------------------------------------
+class User(Base):
+    __tablename__ = "users"
+
     id = Column(Integer, primary_key=True, index=True)
-    first_name = Column(String)
-    last_name = Column(String)
-    email = Column(String, unique=True, index=True)
-    phone = Column(String)
-    password = Column(String)
-    role = Column(String, default="chauffeur")  # <-- AJOUTÉ
+    email = Column(String(255), unique=True, nullable=False)
+    password = Column(String(255), nullable=False)
+    role = Column(String(20), default="chauffeur")
+    chauffeur_id = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    last_login = Column(DateTime, nullable=True)
+    is_active = Column(String, default=True)
 
-
-# Modèles Pydantic
+# -------------------------------------------------
+# Pydantic Models
+# -------------------------------------------------
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
@@ -47,10 +53,8 @@ class LoginRequest(BaseModel):
 class UserResponse(BaseModel):
     id: int
     email: str
-    first_name: Optional[str]
-    last_name: Optional[str]
     role: str
-    
+
     class Config:
         from_attributes = True
 
@@ -58,10 +62,9 @@ class LoginResponse(BaseModel):
     token: str
     user: UserResponse
 
-# FastAPI App
-app = FastAPI(title="Minibus Route Optimization API")
-
-# Configuration CORS
+# -------------------------------------------------
+# CONFIG CORS
+# -------------------------------------------------
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
@@ -70,10 +73,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Context pour hasher les mots de passe
+# -------------------------------------------------
+# PASSWORD HASHING
+# -------------------------------------------------
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# Dépendance pour obtenir la session de base de données
+def verify_password(plain_password: str, stored_password: str) -> bool:
+    return plain_password == stored_password
+
+# -------------------------------------------------
+# JWT TOKEN
+# -------------------------------------------------
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=15))
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+# -------------------------------------------------
+# DB Session
+# -------------------------------------------------
 def get_db():
     db = SessionLocal()
     try:
@@ -81,77 +100,48 @@ def get_db():
     finally:
         db.close()
 
-# Fonction pour vérifier le mot de passe
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
-
-# Fonction pour créer un token JWT
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
-
-# Page d'accueil
-@app.get("/")
-def read_root():
-    return {"message": "Minibus Route Optimization API"}
-
-# Vérification santé
-@app.get("/health")
-def health_check():
-    return {"status": "healthy"}
-
-# Route de connexion
+# -------------------------------------------------
+# LOGIN ROUTE
+# -------------------------------------------------
 @app.post("/api/login", response_model=LoginResponse)
 async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
-    # Rechercher l'utilisateur par email
-    user = db.query(Client).filter(Client.email == login_data.email).first()
-    
-    # Vérifier si l'utilisateur existe
+
+    user = db.query(User).filter(User.email == login_data.email).first()
+
     if not user:
-        raise HTTPException(
-            status_code=401,
-            detail="Email ou mot de passe incorrect"
-        )
-    
-    # Vérifier le mot de passe
+        raise HTTPException(status_code=401, detail="Email ou mot de passe incorrect")
+
     if not verify_password(login_data.password, user.password):
-        raise HTTPException(
-            status_code=401,
-            detail="Email ou mot de passe incorrect"
-        )
-    
-    # Créer le token JWT
+        raise HTTPException(status_code=401, detail="Email ou mot de passe incorrect")
+
+    # Generate JWT token
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.email, "user_id": user.id},
         expires_delta=access_token_expires
     )
-    
-    # Retourner le token et les informations de l'utilisateur
+
     return LoginResponse(
         token=access_token,
         user=UserResponse(
             id=user.id,
             email=user.email,
-            first_name=user.first_name,
-            last_name=user.last_name,
             role=user.role
         )
     )
 
-# Importer les routes existantes si elles existent
+# -------------------------------------------------
+# ROUTES IMPORT
+# -------------------------------------------------
 try:
     from app.routers.routes import router
     app.include_router(router)
 except ImportError:
-    print("Routes d'optimisation non trouvées, seule l'authentification est disponible")
+    print("Routes d'optimisation non trouvées.")
 
+# -------------------------------------------------
+# RUN SERVER
+# -------------------------------------------------
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
