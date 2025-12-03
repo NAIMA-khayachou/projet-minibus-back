@@ -15,13 +15,12 @@ def main():
     logger.info("📊 Chargement des données...")
     
     stations_raw = get_all_stations()  # [(id, name, lat, lon), ...]
-    reservations_raw = get_all_reservations()  # ✅ Retourne déjà des objets Reservation
-    minibus_raw = get_all_minibus()  # ✅ Retourne déjà des objets Minibus
+    reservations_raw = get_all_reservations()  # objets Reservation
+    minibus_raw = get_all_minibus()  # objets Minibus
     
     if not stations_raw:
         logger.error("❌ Aucune station trouvée")
         return
-    
     if not reservations_raw:
         logger.error("❌ Aucune réservation trouvée")
         return
@@ -40,76 +39,80 @@ def main():
         }
     
     logger.info(f"📍 Stations: {list(stations_dict.keys())}")
+
+    # ========================================
+    # 🔍 VÉRIFICATION DU MAPPING
+    # ========================================
+    print("\n🔍 VÉRIFICATION DU MAPPING STATIONS:")
+    print("stations_raw (ordre dans les matrices OSRM):")
+    for i, (sid, name, lat, lon) in enumerate(stations_raw):
+        print(f"  Index {i}: Station ID={sid} → {name}")
+
+    print("\nstations_dict (ce que l'algo utilise):")
+    for sid, data in sorted(stations_dict.items()):
+        print(f"  Station ID={sid} → {data['name']}")
+
+    print("\n📋 RÉSERVATIONS AVEC NOMS DE STATIONS:")
+    for res in reservations_raw:
+        pickup_station = stations_dict.get(res.pickup_station_id)
+        dropoff_station = stations_dict.get(res.dropoff_station_id)
+        
+        pickup_name = pickup_station['name'] if pickup_station else f"❌ ID {res.pickup_station_id} INTROUVABLE"
+        dropoff_name = dropoff_station['name'] if dropoff_station else f"❌ ID {res.dropoff_station_id} INTROUVABLE"
+        
+        print(f"Rés {res.id}: {res.client_name}")
+        print(f"  Pickup:  ID {res.pickup_station_id} → {pickup_name}")
+        print(f"  Dropoff: ID {res.dropoff_station_id} → {dropoff_name}")
+        print(f"  Personnes: {res.number_of_people}")
     
     # ========================================
     # 3️⃣ CONSTRUIRE LES MATRICES AVEC OSRM
     # ========================================
     logger.info("🗺️ Construction des matrices de distances/durées avec OSRM...")
     
-    # ✅ ATTENTION: OSRM attend (longitude, latitude)
+    # OSRM attend (longitude, latitude)
     points = [(lon, lat) for (station_id, name, lat, lon) in stations_raw]
-    
     logger.info(f"📍 Points OSRM (lon, lat): {points[:3]}...")
     
     matrice_durees, matrice_distances = get_cost_matrices(points)
-    
     if matrice_distances is None or matrice_durees is None:
         logger.error("❌ Échec de la récupération des matrices OSRM")
         logger.error("⚠️ Vérifiez que le serveur OSRM est démarré sur http://localhost:5000")
         return
     
-    # ✅ AFFICHER QUELQUES DISTANCES POUR VÉRIFICATION
+    # Vérification rapide des distances
     logger.info("\n🔍 VÉRIFICATION DES MATRICES:")
     for i in range(min(3, len(stations_raw))):
         for j in range(min(3, len(stations_raw))):
             if i != j:
-                dist_m = matrice_distances[i][j]
-                dist_km = dist_m / 1000
-                duree_s = matrice_durees[i][j]
-                duree_min = duree_s / 60
-                
-                station_i = stations_raw[i][1]
-                station_j = stations_raw[j][1]
-                
-                logger.info(f"   {station_i} → {station_j}: {dist_km:.2f} km, {duree_min:.1f} min")
+                dist_km = matrice_distances[i][j] / 1000
+                duree_min = matrice_durees[i][j] / 60
+                logger.info(f"   {stations_raw[i][1]} → {stations_raw[j][1]}: {dist_km:.2f} km, {duree_min:.1f} min")
     
     # ========================================
-    # 4️⃣ LES RÉSERVATIONS SONT DÉJÀ DES OBJETS
+    # 4️⃣ RÉSERVATIONS & MINIBUS
     # ========================================
-    reservations = reservations_raw  # ✅ Pas besoin de recréer
+    reservations = reservations_raw
+    minibus = minibus_raw
+
+    logger.info(f"\n📋 {len(reservations)} Réservations chargées")
+    for res in reservations[:3]:
+        logger.info(f"   #{res.id}: {res.client_name} | {res.pickup_station_id} → {res.dropoff_station_id} | {res.number_of_people} pers")
     
-    logger.info(f"\n📋 {len(reservations)} Réservations chargées:")
-    for res in reservations[:3]:  # Afficher les 3 premières
-        logger.info(f"   #{res.id}: {res.client_name} | Station {res.pickup_station_id} → {res.dropoff_station_id} | {res.number_of_people} pers")
-    
-    # ========================================
-    # 5️⃣ LES MINIBUS SONT DÉJÀ DES OBJETS
-    # ========================================
-    minibus = minibus_raw  # ✅ Pas besoin de recréer
-    
-    logger.info(f"\n🚌 {len(minibus)} Minibus chargés:")
+    logger.info(f"\n🚌 {len(minibus)} Minibus chargés")
     for bus in minibus[:3]:
         logger.info(f"   #{bus.id}: {bus.license_plate} (capacité {bus.capacity})")
     
     # ========================================
-    # 6️⃣ DÉFINIR LE DÉPÔT
+    # 5️⃣ DÉFINIR LE DÉPÔT
     # ========================================
-    # ✅ OPTION 1: Choisir manuellement (ex: Gare Marrakech = ID 2)
     DEPOT_STATION_ID = 2
-    
-    # ✅ OPTION 2: Demander à l'utilisateur
-    # print("\n🏢 Stations disponibles:")
-    # for sid, sdata in stations_dict.items():
-    #     print(f"   {sid}: {sdata['name']}")
-    # DEPOT_STATION_ID = int(input("Choisissez l'ID du dépôt: "))
-    
     logger.info(f"🏢 Dépôt: Station {DEPOT_STATION_ID} ({stations_dict[DEPOT_STATION_ID]['name']})")
     
     # ========================================
-    # 7️⃣ LANCER L'ALGORITHME GÉNÉTIQUE
+    # 6️⃣ LANCER L'ALGORITHME GÉNÉTIQUE
     # ========================================
     logger.info("\n🧬 Lancement de l'algorithme génétique...")
-    
     ga = GeneticAlgorithm(
         reservations=reservations,
         minibus=minibus,
@@ -117,21 +120,19 @@ def main():
         matrice_distances=matrice_distances,
         matrice_durees=matrice_durees,
         depot_station_id=DEPOT_STATION_ID,
-        use_osrm=True,  # ✅ IMPORTANT !
-        population_size=50,   # ✅ Augmenté
-        generations=100,      # ✅ Augmenté
+        use_osrm=True,
+        population_size=50,
+        generations=100,
         prob_croisement=0.8,
         prob_mutation=0.2
     )
-    
     best_solution, best_details = ga.run()
-    
     if best_solution is None:
         logger.error("❌ Aucune solution trouvée")
         return
     
     # ========================================
-    # 8️⃣ AFFICHER LES RÉSULTATS
+    # 7️⃣ AFFICHER LES RÉSULTATS
     # ========================================
     print("\n" + "="*60)
     print("🏆 MEILLEURE SOLUTION TROUVÉE")
@@ -144,7 +145,7 @@ def main():
     print(f"❌ Réservations non servies: {best_details['reservations_non_servies']}")
     
     # ========================================
-    # 9️⃣ AFFICHER LES ITINÉRAIRES
+    # 8️⃣ AFFICHER LES ITINÉRAIRES
     # ========================================
     print("\n" + "="*60)
     print("🗺️  ITINÉRAIRES DÉTAILLÉS")

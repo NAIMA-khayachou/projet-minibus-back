@@ -1,4 +1,4 @@
-# app/algorithms/solution_builder.py - VERSION CORRIGÉE
+# app/algorithms/solution_builder.py - VERSION CORRIGÉE COMPLÈTE
 
 import random
 from typing import List, Dict, Optional, Tuple
@@ -249,7 +249,7 @@ class SolutionBuilder:
         return solution
     
     def construire_itineraires(self, solution: Solution):
-        """Construit les itinéraires détaillés"""
+        """✅ VERSION INTELLIGENTE : Construit les itinéraires avec ordre optimal pickup/dropoff"""
         depot_name = self._get_station_name(self.stations_dict.get(self.depot_station_id))
         
         for minibus in solution.minibus_list:
@@ -260,54 +260,145 @@ class SolutionBuilder:
                 solution.itineraires[minibus_id].arrets = []
                 continue
             
-            arrets = []
-            
-            # Départ du dépôt
-            arrets.append(Arret(
-                station_id=self.depot_station_id,
-                station_name=depot_name,
-                type="DEPOT"
-            ))
-            
-            # Pickups
-            for reservation in reservations_minibus:
-                pickup_id = getattr(reservation, 'pickup_station_id', None) or \
-                           getattr(reservation, 'pickup_station', None)
-                pickup_obj = self.stations_dict.get(pickup_id)
-                station_name = self._get_station_name(pickup_obj)
-                
-                arrets.append(Arret(
-                    station_id=pickup_id,
-                    station_name=station_name,
-                    type="PICKUP",
-                    reservation_id=reservation.id,
-                    personnes=reservation.number_of_people
-                ))
-            
-            # Dropoffs
-            for reservation in reservations_minibus:
-                dropoff_id = getattr(reservation, 'dropoff_station_id', None) or \
-                            getattr(reservation, 'dropoff_station', None)
-                dropoff_obj = self.stations_dict.get(dropoff_id)
-                station_name = self._get_station_name(dropoff_obj)
-                
-                arrets.append(Arret(
-                    station_id=dropoff_id,
-                    station_name=station_name,
-                    type="DROPOFF",
-                    reservation_id=reservation.id,
-                    personnes=reservation.number_of_people
-                ))
-            
-            # Retour au dépôt
-            arrets.append(Arret(
-                station_id=self.depot_station_id,
-                station_name=depot_name,
-                type="DEPOT"
-            ))
+            # ✅ CONSTRUCTION INTELLIGENTE DE L'ITINÉRAIRE
+            arrets = self._construire_ordre_intelligent(
+                reservations_minibus, 
+                minibus.capacity,
+                depot_name
+            )
             
             solution.itineraires[minibus_id].arrets = arrets
             solution.itineraires[minibus_id].reservations_servies = [r.id for r in reservations_minibus]
+
+    def _construire_ordre_intelligent(self, reservations, capacite_minibus, depot_name):
+        """
+        ✅ Construit l'ordre des arrêts en alternant pickups/dropoffs selon proximité
+        
+        Logique :
+        1. Départ du dépôt
+        2. À chaque étape, choisir le prochain arrêt le plus proche parmi :
+           - Les pickups non encore faits
+           - Les dropoffs des passagers déjà à bord
+        3. Respecter la capacité et l'ordre pickup avant dropoff
+        4. Retour au dépôt
+        """
+        arrets = []
+        
+        # 🏁 Départ du dépôt
+        arrets.append(Arret(
+            station_id=self.depot_station_id,
+            station_name=depot_name,
+            type="DEPOT"
+        ))
+        
+        position_actuelle_id = self.depot_station_id
+        
+        # ✅ CORRECTION : Utiliser des LISTES au lieu de sets
+        reservations_non_prises = list(reservations)  # ✅ Liste au lieu de set
+        passagers_a_bord = {}  # {reservation_id: reservation_obj}
+        charge_actuelle = 0
+        
+        # 🔄 Boucle principale : construire l'itinéraire arrêt par arrêt
+        while reservations_non_prises or passagers_a_bord:
+            
+            meilleur_arret = None
+            distance_min = float('inf')
+            type_arret = None
+            reservation_choisie = None
+            
+            # 🔍 CANDIDATS PICKUPS : Réservations pas encore prises
+            for reservation in reservations_non_prises:
+                # Vérifier capacité
+                if charge_actuelle + reservation.number_of_people > capacite_minibus:
+                    continue  # Pas assez de place
+                
+                pickup_id = getattr(reservation, 'pickup_station_id', None) or \
+                           getattr(reservation, 'pickup_station', None)
+                
+                idx_actuel = self._id_to_index(position_actuelle_id)
+                idx_pickup = self._id_to_index(pickup_id)
+                
+                if idx_actuel is None or idx_pickup is None:
+                    continue
+                
+                distance = self.matrice_distances[idx_actuel][idx_pickup]
+                
+                if distance < distance_min:
+                    distance_min = distance
+                    meilleur_arret = pickup_id
+                    type_arret = "PICKUP"
+                    reservation_choisie = reservation
+            
+            # 🔍 CANDIDATS DROPOFFS : Passagers déjà à bord
+            for reservation in passagers_a_bord.values():
+                dropoff_id = getattr(reservation, 'dropoff_station_id', None) or \
+                            getattr(reservation, 'dropoff_station', None)
+                
+                idx_actuel = self._id_to_index(position_actuelle_id)
+                idx_dropoff = self._id_to_index(dropoff_id)
+                
+                if idx_actuel is None or idx_dropoff is None:
+                    continue
+                
+                distance = self.matrice_distances[idx_actuel][idx_dropoff]
+                
+                # ✅ Priorité légère aux dropoffs (multiplier par 0.95)
+                # Pour éviter de surcharger le bus inutilement
+                distance_ajustee = distance * 0.95
+                
+                if distance_ajustee < distance_min:
+                    distance_min = distance_ajustee
+                    meilleur_arret = dropoff_id
+                    type_arret = "DROPOFF"
+                    reservation_choisie = reservation
+            
+            # ❌ Aucun arrêt trouvé (ne devrait pas arriver)
+            if meilleur_arret is None:
+                logger.warning("⚠️ Aucun arrêt trouvé, arrêt de la construction")
+                break
+            
+            # ✅ AJOUTER L'ARRÊT CHOISI
+            station_obj = self.stations_dict.get(meilleur_arret)
+            station_name = self._get_station_name(station_obj)
+            
+            if type_arret == "PICKUP":
+                arrets.append(Arret(
+                    station_id=meilleur_arret,
+                    station_name=station_name,
+                    type="PICKUP",
+                    reservation_id=reservation_choisie.id,
+                    personnes=reservation_choisie.number_of_people
+                ))
+                
+                # Mettre à jour l'état
+                reservations_non_prises.remove(reservation_choisie)  # ✅ remove() marche avec liste
+                passagers_a_bord[reservation_choisie.id] = reservation_choisie
+                charge_actuelle += reservation_choisie.number_of_people
+            
+            elif type_arret == "DROPOFF":
+                arrets.append(Arret(
+                    station_id=meilleur_arret,
+                    station_name=station_name,
+                    type="DROPOFF",
+                    reservation_id=reservation_choisie.id,
+                    personnes=reservation_choisie.number_of_people
+                ))
+                
+                # Mettre à jour l'état
+                del passagers_a_bord[reservation_choisie.id]
+                charge_actuelle -= reservation_choisie.number_of_people
+            
+            # Avancer à la nouvelle position
+            position_actuelle_id = meilleur_arret
+        
+        # 🏁 Retour au dépôt
+        arrets.append(Arret(
+            station_id=self.depot_station_id,
+            station_name=depot_name,
+            type="DEPOT"
+        ))
+        
+        return arrets
     
     def reparer_solution(self, solution: Solution):
         """✅ CORRECTION 7: Réparation avec réassignation"""
