@@ -23,12 +23,17 @@ class FitnessCalculator:
         self.PENALITE_RESERVATION_NON_SERVIE = 50000
         self.PENALITE_ORDRE_INVALIDE = 100000
         self.PENALITE_RETARD_PAR_MINUTE = 500
-        self.BONUS_REUTILISATION = -100
         
-        # ✅ NOUVEAU : Temps d'arrêt fixe (en MINUTES)
+        # ✅ CORRECTION CRITIQUE : Bonus réduit pour ne pas dominer le fitness
+        self.BONUS_REUTILISATION = -5  # Au lieu de -100
+        
+        # Alternative : Bonus proportionnel (décommenter si préféré)
+        # self.FACTEUR_BONUS_REUTILISATION = 0.98  # 2% de réduction par réutilisation
+        
+        # ✅ Temps d'arrêt fixe (en MINUTES)
         self.TEMPS_ARRET_MINUTES = 2
         
-        logger.info(f"✅ FitnessCalculator initialisé (OSRM={use_osrm})")
+        logger.info(f"✅ FitnessCalculator initialisé (OSRM={use_osrm}, Bonus=-5)")
     
     def calculer_fitness(self, solution: Solution) -> Tuple[float, Dict]:
         """
@@ -78,13 +83,20 @@ class FitnessCalculator:
         total_reservations = len(solution.reservations_list)
         reservations_non_servies = total_reservations - reservations_servies
         
-        # ✅ CALCUL DU FITNESS AVEC CONTRAINTES HORAIRES
+        # ✅ MÉTHODE 1 : Bonus fixe petit (RECOMMANDÉ pour débuter)
         fitness = distance_totale
         fitness += violations_capacite * self.PENALITE_CAPACITE
         fitness += reservations_non_servies * self.PENALITE_RESERVATION_NON_SERVIE
         fitness += violations_ordre * self.PENALITE_ORDRE_INVALIDE
         fitness += retard_total * self.PENALITE_RETARD_PAR_MINUTE
-        fitness += bonus_reutilisation * self.BONUS_REUTILISATION
+        fitness += bonus_reutilisation * self.BONUS_REUTILISATION  # -5 par réutilisation
+        
+        # ✅ MÉTHODE 2 : Bonus proportionnel (ALTERNATIVE avancée)
+        # Décommenter pour utiliser cette méthode :
+        # facteur_bonus = self.FACTEUR_BONUS_REUTILISATION ** bonus_reutilisation
+        # fitness = distance_totale * facteur_bonus
+        # fitness += violations_capacite * self.PENALITE_CAPACITE
+        # ... etc
         
         # Mettre à jour la solution
         solution.distance_totale_flotte = distance_totale
@@ -110,7 +122,7 @@ class FitnessCalculator:
     
     def _evaluer_itineraire(self, itineraire, capacite: int, reservations_list) -> Tuple:
         """
-        ✅ CORRIGÉ : Évalue un itinéraire avec conversion correcte des unités
+        ✅ Évalue un itinéraire avec conversion correcte des unités
         
         Retourne: (distance_km, duree_min, charge_max, violations_capacite, 
                   violations_ordre, violations_horaire, retard_total, bonus_reutilisation)
@@ -145,18 +157,20 @@ class FitnessCalculator:
                     dist_brut = self.matrice_distances[idx_prec][idx_curr]
                     duree_brut = self.matrice_durees[idx_prec][idx_curr]
                     
-                    # ✅ CORRECTION PRINCIPALE : Conversion correcte des unités OSRM
+                    # ✅ Conversion correcte des unités OSRM
                     if self.use_osrm:
-                        # OSRM retourne : distances en MÈTRES, durées en SECONDES
-                        dist_km = dist_brut / 1000.0
-                        duree_min = duree_brut / 60.0
+                        # matrice_distances contient les DURÉES en secondes
+                        # matrice_durees contient les DISTANCES en mètres
+                        # (Vos matrices sont inversées par rapport aux noms)
+                        dist_km = duree_brut / 1000.0      # mètres → km
+                        duree_min = dist_brut / 60.0       # secondes → minutes
                     else:
                         # Matrices déjà en km et minutes
                         dist_km = dist_brut
                         duree_min = duree_brut
                     
-                    # ✅ Ajouter le temps d'arrêt seulement si ce n'est pas le dépôt final
-                    if arret.type != "DEPOT" or i < len(itineraire.arrets) - 1:
+                    # ✅ Ajouter le temps d'arrêt seulement pour les STOPS
+                    if arret.type == "STOP":
                         duree_min += self.TEMPS_ARRET_MINUTES
                     
                     # Accumuler
@@ -205,6 +219,6 @@ class FitnessCalculator:
             arret.passagers_a_bord = charge_actuelle
             arret.capacite_restante = capacite - charge_actuelle
             charge_max = max(charge_max, charge_actuelle)
-            
+        
         return (distance_totale, duree_totale, charge_max, violations_capacite, 
                 violations_ordre, violations_horaire, retard_total, bonus_reutilisation)

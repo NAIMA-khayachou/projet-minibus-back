@@ -1,10 +1,8 @@
-"""
-Module pour intégrer dynamiquement de nouvelles réservations
-"""
+
 import logging
 from typing import Optional, Tuple
-from datetime import datetime
-from .solution import Solution
+from datetime import datetime, timedelta
+from .solution import Solution, Arret, ItineraireMinibus
 
 logger = logging.getLogger(__name__)
 
@@ -21,11 +19,11 @@ class ReservationIntegrator:
         nouvelle_reservation
     ) -> Tuple[bool, Optional[int], str]:
         """
-        ✅ FONCTION PRINCIPALE: Intègre une nouvelle réservation
+        ✅ CORRIGÉ : Intègre une nouvelle réservation SANS DUPLICATION
         
         Stratégie:
         1. Chercher un minibus dont la route passe par la station pickup
-        2. Si trouvé, ajouter la réservation à ce minibus
+        2. Si trouvé, INSÉRER la réservation dans l'itinéraire existant
         3. Sinon, assigner à un minibus peu chargé
         
         Returns:
@@ -51,8 +49,12 @@ class ReservationIntegrator:
                 solution_actuelle.reservations_list.append(nouvelle_reservation)
                 solution_actuelle.reservations_by_id[nouvelle_reservation.id] = nouvelle_reservation
             
-            # Reconstruire l'itinéraire de ce minibus
-            self._reconstruire_itineraire_minibus(solution_actuelle, minibus_compatible)
+            # ✅ CORRECTION : INSÉRER intelligemment au lieu de reconstruire
+            self._inserer_reservation_dans_itineraire(
+                solution_actuelle, 
+                minibus_compatible, 
+                nouvelle_reservation
+            )
             
             # Recalculer le fitness
             self.fitness_calculator.calculer_fitness(solution_actuelle)
@@ -85,8 +87,12 @@ class ReservationIntegrator:
                     solution_actuelle.reservations_list.append(nouvelle_reservation)
                     solution_actuelle.reservations_by_id[nouvelle_reservation.id] = nouvelle_reservation
                 
-                # Reconstruire l'itinéraire
-                self._reconstruire_itineraire_minibus(solution_actuelle, minibus_moins_charge.id)
+                # ✅ CORRECTION : Insérer au lieu de reconstruire
+                self._inserer_reservation_dans_itineraire(
+                    solution_actuelle,
+                    minibus_moins_charge.id,
+                    nouvelle_reservation
+                )
                 
                 # Recalculer le fitness
                 self.fitness_calculator.calculer_fitness(solution_actuelle)
@@ -104,22 +110,160 @@ class ReservationIntegrator:
                     f"Impossible d'intégrer: capacité insuffisante (besoin: {nouvelle_reservation.number_of_people}, dispo: {capacite_disponible})"
                 )
     
-    def _reconstruire_itineraire_minibus(self, solution: Solution, minibus_id: int):
-        """Reconstruit l'itinéraire d'un seul minibus"""
-        reservations = solution.get_reservations_by_minibus(minibus_id)
+    def _inserer_reservation_dans_itineraire(
+        self, 
+        solution: Solution, 
+        minibus_id: int, 
+        reservation
+    ):
+        """
+        ✅ NOUVELLE MÉTHODE : Insère une réservation dans un itinéraire existant
+        SANS le reconstruire complètement
+        """
+        itineraire = solution.itineraires[minibus_id]
         
-        if not reservations:
-            return
-        
-        # Trier par heure souhaitée
-        reservations = sorted(reservations, key=lambda r: r.desired_time or datetime.max)
-        
-        # Utiliser le solution_builder pour reconstruire
-        self.solution_builder._construire_itineraire_optimise(
-            solution, 
-            minibus_id, 
-            reservations
+        # 1. Trouver ou créer l'arrêt PICKUP
+        position_pickup = self._trouver_ou_creer_arret_pickup(
+            itineraire, 
+            reservation,
+            solution.stations_dict
         )
+        
+        # 2. Trouver ou créer l'arrêt DROPOFF (APRÈS le pickup)
+        position_dropoff = self._trouver_ou_creer_arret_dropoff(
+            itineraire,
+            reservation,
+            position_pickup,
+            solution.stations_dict
+        )
+        
+        # 3. Ajouter la réservation à la liste servie
+        if reservation.id not in itineraire.reservations_servies:
+            itineraire.reservations_servies.append(reservation.id)
+        
+        # 4. Recalculer les horaires de l'itinéraire
+        reservations = solution.get_reservations_by_minibus(minibus_id)
+        self.solution_builder._calculer_horaires(itineraire, reservations)
+        
+        logger.info(f"✅ Réservation {reservation.id} insérée dans l'itinéraire")
+    
+    def _trouver_ou_creer_arret_pickup(
+        self, 
+        itineraire: ItineraireMinibus, 
+        reservation,
+        stations_dict: dict
+    ) -> int:
+        """
+        Trouve un arrêt existant à la station pickup OU le crée
+        
+        Returns: position de l'arrêt pickup
+        """
+        pickup_station_id = reservation.pickup_station_id
+        
+        # Chercher un arrêt existant à cette station
+        for i, arret in enumerate(itineraire.arrets):
+            if arret.station_id == pickup_station_id and arret.type == "STOP":
+                # ✅ Arrêt existant : ajouter le pickup
+                arret.ajouter_pickup(reservation.id, reservation.number_of_people)
+                logger.info(f"   ✅ Pickup ajouté à l'arrêt existant: {arret.station_name}")
+                return i
+        
+        # ❌ Pas d'arrêt existant : en créer un nouveau
+        # Trouver la meilleure position (basée sur l'heure souhaitée)
+        position_insertion = self._trouver_position_optimale(
+            itineraire,
+            reservation.desired_time,
+            pickup_station_id
+        )
+        
+        # Créer le nouvel arrêt
+        nouvel_arret = Arret(
+            station_id=pickup_station_id,
+            station_name=stations_dict[pickup_station_id]["name"],
+            type="STOP"
+        )
+        nouvel_arret.ajouter_pickup(reservation.id, reservation.number_of_people)
+        
+        # Insérer dans l'itinéraire
+        itineraire.arrets.insert(position_insertion, nouvel_arret)
+        logger.info(f"   ✅ Nouvel arrêt pickup créé à la position {position_insertion}: {nouvel_arret.station_name}")
+        
+        return position_insertion
+    
+    def _trouver_ou_creer_arret_dropoff(
+        self,
+        itineraire: ItineraireMinibus,
+        reservation,
+        position_pickup: int,
+        stations_dict: dict
+    ) -> int:
+        """
+        Trouve un arrêt existant à la station dropoff APRÈS le pickup OU le crée
+        
+        Returns: position de l'arrêt dropoff
+        """
+        dropoff_station_id = reservation.dropoff_station_id
+        
+        # Chercher un arrêt existant APRÈS le pickup
+        for i in range(position_pickup + 1, len(itineraire.arrets)):
+            arret = itineraire.arrets[i]
+            if arret.station_id == dropoff_station_id and arret.type == "STOP":
+                # ✅ Arrêt existant : ajouter le dropoff
+                arret.ajouter_dropoff(reservation.id, reservation.number_of_people)
+                logger.info(f"   ✅ Dropoff ajouté à l'arrêt existant: {arret.station_name}")
+                return i
+        
+        # ❌ Pas d'arrêt existant : en créer un nouveau
+        # Insérer avant le dépôt final
+        position_insertion = len(itineraire.arrets) - 1
+        
+        # Créer le nouvel arrêt
+        nouvel_arret = Arret(
+            station_id=dropoff_station_id,
+            station_name=stations_dict[dropoff_station_id]["name"],
+            type="STOP"
+        )
+        nouvel_arret.ajouter_dropoff(reservation.id, reservation.number_of_people)
+        
+        # Insérer dans l'itinéraire
+        itineraire.arrets.insert(position_insertion, nouvel_arret)
+        logger.info(f"   ✅ Nouvel arrêt dropoff créé à la position {position_insertion}: {nouvel_arret.station_name}")
+        
+        return position_insertion
+    
+    def _trouver_position_optimale(
+        self,
+        itineraire: ItineraireMinibus,
+        heure_souhaitee: datetime,
+        station_id: int
+    ) -> int:
+        """
+        Trouve la meilleure position pour insérer un nouvel arrêt
+        basée sur l'heure souhaitée
+        
+        Returns: index où insérer (1 = après dépôt initial)
+        """
+        # Exclure les dépôts (premier et dernier)
+        arrets_non_depot = [
+            (i, arret) for i, arret in enumerate(itineraire.arrets)
+            if arret.type == "STOP"
+        ]
+        
+        if not arrets_non_depot:
+            # Pas d'arrêts existants : insérer après le dépôt initial
+            return 1
+        
+        # Trouver l'arrêt dont l'heure est la plus proche (mais avant)
+        meilleure_position = 1
+        
+        for i, arret in arrets_non_depot:
+            if arret.heure_arrivee and arret.heure_arrivee <= heure_souhaitee:
+                meilleure_position = i + 1
+            else:
+                # Dès qu'on dépasse l'heure souhaitée, on s'arrête
+                break
+        
+        return meilleure_position
     
     def analyser_impact(
         self, 
@@ -151,90 +295,3 @@ class ReservationIntegrator:
             logger.warning(f"   ⏰ Retard ajouté: +{impact['retard_ajoute']:.1f} min")
         
         return impact
-
-
-def exemple_utilisation_integration():
-    """
-    ✅ EXEMPLE: Comment utiliser le système avec une nouvelle réservation
-    """
-    from app.Algorithme.genetic_algoritme import GeneticAlgorithm
-    from models.route import RouteManager
-    from models.station import StationManager
-    from models.bus import BusManager
-    from database import SessionLocal
-    
-    # 1. Récupérer les données
-    db = SessionLocal()
-    
-    route_manager = RouteManager(db)
-    station_manager = StationManager(db)
-    bus_manager = BusManager(db)
-    
-    # Charger les données existantes
-    stations = station_manager.load_all_stations()
-    stations_dict = {s.id: s for s in stations}
-    
-    minibus_list = bus_manager.get_available_buses()
-    reservations_existantes = route_manager.get_pending_reservations()
-    
-    # 2. Optimiser avec l'algorithme génétique
-    from app.internal.osrm_engine import OSRMClient
-    osrm = OSRMClient()
-    
-    coords = [(s.latitude, s.longitude) for s in stations]
-    matrice_distances, matrice_durees = osrm.get_distance_matrix_from_coords(coords)
-    
-    ga = GeneticAlgorithm(
-        reservations=reservations_existantes,
-        minibus=minibus_list,
-        stations_dict=stations_dict,
-        matrice_distances=matrice_distances,
-        matrice_durees=matrice_durees,
-        depot_station_id=1,
-        use_osrm=True,
-        population_size=50,
-        generations=100
-    )
-    
-    solution_optimale, _ = ga.run()
-    
-    # 3. NOUVELLE RÉSERVATION ARRIVE
-    from models.route import Reservation
-    
-    nouvelle_reservation = Reservation(
-        id=999,  # ID temporaire
-        client_id=1,
-        pickup_station_id=5,
-        dropoff_station_id=12,
-        number_of_people=3,
-        desired_time=datetime.now(),
-        status='pending'
-    )
-    
-    # 4. Intégrer la nouvelle réservation
-    integrator = ReservationIntegrator(
-        ga.solution_builder,
-        ga.fitness_calculator
-    )
-    
-    solution_avant = solution_optimale.copy()
-    
-    succes, minibus_id, message = integrator.integrer_nouvelle_reservation(
-        solution_optimale,
-        nouvelle_reservation
-    )
-    
-    if succes:
-        print(f"✅ {message}")
-        
-        # Analyser l'impact
-        impact = integrator.analyser_impact(solution_avant, solution_optimale)
-        
-        # Sauvegarder dans la BD
-        route_solution = solution_optimale.to_route_solution(minibus_id)
-        if route_solution:
-            route_manager.save_optimized_route(route_solution)
-    else:
-        print(f"❌ {message}")
-    
-    db.close()

@@ -25,8 +25,8 @@
           1
         ],
         "dropoffs": [],
-        "distance_depuis_precedent": 1.69,
-        "duree_depuis_precedent": 5.0,
+        "distance_depuis_precedent": 0.19,
+        "duree_depuis_precedent": 30.0,
         "personnes_montantes": 3,
         "personnes_descendantes": 0,
         "passagers_a_bord": 3,
@@ -41,8 +41,8 @@
           2
         ],
         "dropoffs": [],
-        "distance_depuis_precedent": 1.64,
-        "duree_depuis_precedent": 5.0,
+        "distance_depuis_precedent": 0.18,
+        "duree_depuis_precedent": 29.0,
         "personnes_montantes": 2,
         "personnes_descendantes": 0,
         "passagers_a_bord": 5,
@@ -58,8 +58,8 @@
           4
         ],
         "dropoffs": [],
-        "distance_depuis_precedent": 1.79,
-        "duree_depuis_precedent": 5.0,
+        "distance_depuis_precedent": 0.17,
+        "duree_depuis_precedent": 32.0,
         "personnes_montantes": 6,
         "personnes_descendantes": 0,
         "passagers_a_bord": 11,
@@ -76,8 +76,8 @@
         "dropoffs": [
           3
         ],
-        "distance_depuis_precedent": 1.67,
-        "duree_depuis_precedent": 5.0,
+        "distance_depuis_precedent": 0.16,
+        "duree_depuis_precedent": 30.0,
         "personnes_montantes": 1,
         "personnes_descendantes": 4,
         "passagers_a_bord": 8,
@@ -92,8 +92,8 @@
           6
         ],
         "dropoffs": [],
-        "distance_depuis_precedent": 4.68,
-        "duree_depuis_precedent": 11.0,
+        "distance_depuis_precedent": 0.53,
+        "duree_depuis_precedent": 80.0,
         "personnes_montantes": 2,
         "personnes_descendantes": 0,
         "passagers_a_bord": 10,
@@ -109,8 +109,8 @@
           1,
           2
         ],
-        "distance_depuis_precedent": 6.24,
-        "duree_depuis_precedent": 16.0,
+        "distance_depuis_precedent": 0.86,
+        "duree_depuis_precedent": 106.0,
         "personnes_montantes": 0,
         "personnes_descendantes": 5,
         "passagers_a_bord": 5,
@@ -125,8 +125,8 @@
         "dropoffs": [
           6
         ],
-        "distance_depuis_precedent": 13.18,
-        "duree_depuis_precedent": 23.0,
+        "distance_depuis_precedent": 1.24,
+        "duree_depuis_precedent": 222.0,
         "personnes_montantes": 0,
         "personnes_descendantes": 2,
         "passagers_a_bord": 3,
@@ -139,8 +139,8 @@
         "heure_arrivee": "2025-12-29T08:49:46.400000",
         "pickups": [],
         "dropoffs": [],
-        "distance_depuis_precedent": 6.08,
-        "duree_depuis_precedent": 10.0,
+        "distance_depuis_precedent": 0.6,
+        "duree_depuis_precedent": 101.0,
         "personnes_montantes": 0,
         "personnes_descendantes": 0,
         "passagers_a_bord": 3,
@@ -158,8 +158,8 @@
       "Palmeraie",
       "Gare Marrakech"
     ],
-    "distance_totale": 36.98,
-    "duree_totale": 80.0,
+    "distance_totale": 3.95,
+    "duree_totale": 630.0,
     "capacite_minibus": 20,
     "charge_maximale_atteinte": 11,
     "reservations_servies": [
@@ -222,13 +222,13 @@
     "violations_horaire": 0
   },
   "METRIQUES_GLOBALES": {
-    "distance_totale_flotte": 36.98,
-    "duree_totale_flotte": 80.0,
+    "distance_totale_flotte": 3.95,
+    "duree_totale_flotte": 630.0,
     "nombre_minibus_utilises": 0,
     "nombre_total_reservations": 7,
     "reservations_satisfaites": 6,
     "violations_capacite": 0,
     "retard_total_minutes": 0.0,
-    "fitness_score": -163.02
+    "fitness_score": -6.05
   }
 }
