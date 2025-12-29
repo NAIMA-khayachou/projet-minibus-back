@@ -35,6 +35,65 @@ def get_station_by_id(station_id):
     except Exception as e:
         logger.error(f" Erreur get_station_by_id: {e}")
         return None
+    except Exception as e:
+        logger.error(f" Erreur get_station_by_id: {e}")
+        return None
+
+def create_station(name, latitude, longitude):
+    """Crée une nouvelle station"""
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO stations (name, latitude, longitude) 
+            VALUES (%s, %s, %s) RETURNING id;
+        """, (name, latitude, longitude))
+        station_id = cursor.fetchone()[0]
+        conn.commit()
+        cursor.close()
+        db.release_connection(conn)
+        logger.info(f" Station créée avec ID: {station_id}")
+        return station_id
+    except Exception as e:
+        logger.error(f" Erreur create_station: {e}")
+        return None
+
+def update_station(station_id, name, latitude, longitude):
+    """Met à jour une station existante"""
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE stations 
+            SET name = %s, latitude = %s, longitude = %s 
+            WHERE id = %s;
+        """, (name, latitude, longitude, station_id))
+        conn.commit()
+        cursor.close()
+        db.release_connection(conn)
+        logger.info(f" Station {station_id} mise à jour")
+        return True
+    except Exception as e:
+        logger.error(f" Erreur update_station: {e}")
+        return False
+
+def delete_station(station_id):
+    """Supprime une station"""
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM stations WHERE id = %s;", (station_id,))
+        conn.commit()
+        cursor.close()
+        db.release_connection(conn)
+        logger.info(f" Station {station_id} supprimée")
+        return True
+    except Exception as e:
+        logger.error(f" Erreur delete_station: {e}")
+        return False
+
+# ==================== MINIBUS ====================
+
 def get_all_minibus():
     try: 
         conn = db.get_connection() 
@@ -84,13 +143,66 @@ def get_available_minibus():
         logger.error(f" Erreur get_available_minibus: {e}")
         return []
 
+def create_minibus(capacity, license_plate):
+    """Crée un nouveau minibus"""
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO minibus (capacity, license_plate, current_passengers, status, last_maintenance, created_at) 
+            VALUES (%s, %s, 0, 'available', CURRENT_DATE, CURRENT_TIMESTAMP) RETURNING id;
+        """, (capacity, license_plate))
+        minibus_id = cursor.fetchone()[0]
+        conn.commit()
+        cursor.close()
+        db.release_connection(conn)
+        logger.info(f" Minibus créé avec ID: {minibus_id}")
+        return minibus_id
+    except Exception as e:
+        logger.error(f" Erreur create_minibus: {e}")
+        return None
+
+def update_minibus(minibus_id, capacity, license_plate, status='available'):
+    """Met à jour un minibus existant"""
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE minibus 
+            SET capacity = %s, license_plate = %s, status = %s 
+            WHERE id = %s;
+        """, (capacity, license_plate, status, minibus_id))
+        conn.commit()
+        cursor.close()
+        db.release_connection(conn)
+        logger.info(f" Minibus {minibus_id} mis à jour")
+        return True
+    except Exception as e:
+        logger.error(f" Erreur update_minibus: {e}")
+        return False
+
+def delete_minibus(minibus_id):
+    """Supprime un minibus"""
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM minibus WHERE id = %s;", (minibus_id,))
+        conn.commit()
+        cursor.close()
+        db.release_connection(conn)
+        logger.info(f" Minibus {minibus_id} supprimé")
+        return True
+    except Exception as e:
+        logger.error(f" Erreur delete_minibus: {e}")
+        return False
+
 # ==================== CLIENTS ====================
 def get_all_clients():
     """Récupère tous les clients"""
     try:
         conn = db.get_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT id, first_name, last_name, email, phone FROM clients ORDER BY id;")
+        cursor.execute("SELECT id, first_name, last_name, email, phone, status FROM clients ORDER BY id;")
         clients = cursor.fetchall()
         cursor.close()
         db.release_connection(conn)
@@ -99,15 +211,15 @@ def get_all_clients():
         logger.error(f" Erreur get_all_clients: {e}")
         return []
 
-def create_client(first_name, last_name, email=None, phone=None):
+def create_client(first_name, last_name, email=None, phone=None, status='active'):
     """Crée un nouveau client"""
     try:
         conn = db.get_connection()
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO clients (first_name, last_name, email, phone) 
-            VALUES (%s, %s, %s, %s) RETURNING id;
-        """, (first_name, last_name, email, phone))
+            INSERT INTO clients (first_name, last_name, email, phone, status) 
+            VALUES (%s, %s, %s, %s, %s) RETURNING id;
+        """, (first_name, last_name, email, phone, status))
         client_id = cursor.fetchone()[0]
         conn.commit()
         cursor.close()
@@ -117,6 +229,41 @@ def create_client(first_name, last_name, email=None, phone=None):
     except Exception as e:
         logger.error(f" Erreur create_client: {e}")
         return None
+
+def update_client(client_id, first_name, last_name, email=None, phone=None, status='active'):
+    """Met à jour un client existant"""
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE clients 
+            SET first_name = %s, last_name = %s, email = %s, phone = %s, status = %s 
+            WHERE id = %s;
+        """, (first_name, last_name, email, phone, status, client_id))
+        conn.commit()
+        cursor.close()
+        db.release_connection(conn)
+        logger.info(f" Client {client_id} mis à jour")
+        return True
+    except Exception as e:
+        logger.error(f" Erreur update_client: {e}")
+        return False
+
+def delete_client(client_id):
+    """Supprime un client"""
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM clients WHERE id = %s;", (client_id,))
+        conn.commit()
+        cursor.close()
+        db.release_connection(conn)
+        logger.info(f" Client {client_id} supprimé")
+        return True
+    except Exception as e:
+        logger.error(f" Erreur delete_client: {e}")
+        return False
+
 
 # ==================== RÉSERVATIONS ====================
 
@@ -293,4 +440,33 @@ def get_stations_dict():
         }
     except Exception as e:
         logger.error(f"❌ Erreur get_stations_dict: {e}")
-        return {}  
+        return {}
+
+# ==================== USERS ====================
+def get_user_by_email(email):
+    """Récupère un utilisateur par son email"""
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, email, password, role, nom, prenom 
+            FROM users 
+            WHERE email = %s;
+        """, (email,))
+        user = cursor.fetchone()
+        cursor.close()
+        db.release_connection(conn)
+        
+        if user:
+            return {
+                "id": user[0],
+                "email": user[1],
+                "password": user[2],
+                "role": user[3],
+                "nom": user[4],
+                "prenom": user[5]
+            }
+        return None
+    except Exception as e:
+        logger.error(f"❌ Erreur get_user_by_email: {e}")
+        return None
