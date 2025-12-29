@@ -1,5 +1,5 @@
 # database/crud.py
-from ..models.bus import Minibus 
+from ..models.bus import Bus
 from ..models.route import Reservation
 from .connection import db
 import logging
@@ -35,10 +35,7 @@ def get_station_by_id(station_id):
     except Exception as e:
         logger.error(f" Erreur get_station_by_id: {e}")
         return None
-
-# ==================== MINIBUS ====================
 def get_all_minibus():
-    """Récupère tous les minibus sous forme d'objets Minibus"""
     try: 
         conn = db.get_connection() 
         cursor = conn.cursor() 
@@ -50,14 +47,24 @@ def get_all_minibus():
         cursor.close() 
         db.release_connection(conn) 
 
-        logger.info(f" Récupéré {len(rows)} minibus") 
+        minibus_list = []
+        for row in rows:
+            bus = Bus()
+            bus.id = row[0]
+            bus.capacity = row[1]
+            bus.license_plate = row[2]
+            bus.current_passengers = row[3]
+            bus.status = row[4]
+            bus.last_maintenance = row[5]
+            minibus_list.append(bus)
 
-        # Conversion TUPLE → OBJET
-        return [Minibus(*row) for row in rows]
-
+        logger.info(f"Récupéré {len(minibus_list)} minibus")
+        return minibus_list
     except Exception as e: 
-        logger.error(f" Erreur get_all_minibus: {e}")
+        logger.error(f"Erreur get_all_minibus: {e}")
         return []
+
+
 def get_available_minibus():
     """Récupère les minibus disponibles"""
     try:
@@ -122,10 +129,10 @@ def get_all_reservations():
             SELECT 
                 r.id, 
                 c.first_name || ' ' || c.last_name as client_name,
-                r.pickup_station_id,   -- ✅ Retourne l'ID
-                r.dropoff_station_id,  -- ✅ Retourne l'ID
+                r.pickup_station_id,
+                r.dropoff_station_id,
                 r.number_of_people,
-                r.desired_time,
+                CURRENT_DATE + r.desired_time as desired_time,  -- ✅ Convertir TIME en DATETIME
                 r.status
             FROM reservations r
             JOIN clients c ON r.client_id = c.id
@@ -137,9 +144,8 @@ def get_all_reservations():
         
         return [Reservation(*row) for row in rows]
     except Exception as e:
-        logger.error(f" Erreur get_all_reservations: {e}")
+        logger.error(f"❌ Erreur get_all_reservations: {e}")
         return []
-
 def create_reservation(client_id, pickup_station_id, dropoff_station_id, number_of_people, desired_time):
     """Crée une nouvelle réservation"""
     try:
@@ -168,21 +174,24 @@ def get_pending_reservations():
         cursor.execute("""
             SELECT 
                 r.id,
-                r.client_id,
+                c.first_name || ' ' || c.last_name as client_name, 
                 r.pickup_station_id,
                 r.dropoff_station_id,
                 r.number_of_people,
-                r.desired_time
+                r.desired_time,
+                'pending' as status  
             FROM reservations r
+            JOIN clients c ON r.client_id = c.id  
             WHERE r.status = 'pending'
             ORDER BY r.desired_time;
         """)
-        pending_reservations = cursor.fetchall()
+        rows = cursor.fetchall()
         cursor.close()
         db.release_connection(conn)
-        return pending_reservations
+        
+        return [Reservation(*row) for row in rows]  
     except Exception as e:
-        logger.error(f" Erreur get_pending_reservations: {e}")
+        logger.error(f"❌ Erreur get_pending_reservations: {e}")
         return []
     
 
@@ -266,3 +275,22 @@ def get_database_stats():
     except Exception as e:
         logger.error(f" Erreur get_database_stats: {e}")
         return {}
+  # ==================== HELPER FUNCTIONS ====================
+def get_stations_dict():
+    """
+    ✅ NOUVELLE FONCTION HELPER
+    Retourne les stations sous forme de dictionnaire {id: {name, lat, lon}}
+    """
+    try:
+        stations = get_all_stations()
+        return {
+            station_id: {
+                "name": name,
+                "latitude": lat,
+                "longitude": lon
+            }
+            for station_id, name, lat, lon in stations
+        }
+    except Exception as e:
+        logger.error(f"❌ Erreur get_stations_dict: {e}")
+        return {}  

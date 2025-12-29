@@ -1,13 +1,11 @@
-# app/algorithms/operators.py
-
 import random
 from typing import List, Tuple
-from .solution import Solution, Arret
+from .solution import Solution
 
 class GeneticOperators:
-    """Opérateurs génétiques pour l'algorithme"""
+    """Opérateurs génétiques adaptés aux arrêts multiples"""
     
-    def __init__(self, matrice_distances,stations_dict):
+    def __init__(self, matrice_distances, stations_dict):
         self.matrice_distances = matrice_distances
         self.stations_dict = stations_dict
         self.station_ids_order = sorted(stations_dict.keys())
@@ -15,64 +13,47 @@ class GeneticOperators:
             sid: idx for idx, sid in enumerate(self.station_ids_order)
         }
     
-    # ============= SÉLECTION =============
-    
     def selection_tournoi(self, population: List[Solution], fitness_scores: List[float], 
                          taille_tournoi: int = 3) -> Solution:
         """Sélection par tournoi"""
-        # Sélectionner aléatoirement des participants
         indices = random.sample(range(len(population)), min(taille_tournoi, len(population)))
-        
-        # Trouver le meilleur (fitness minimal)
         meilleur_idx = min(indices, key=lambda i: fitness_scores[i])
-        
         return population[meilleur_idx].copy()
-    
-    # ============= CROISEMENT =============
     
     def croisement_ordonne(self, parent1: Solution, parent2: Solution, 
                           prob_croisement: float = 0.8) -> Tuple[Solution, Solution]:
-        """
-        Croisement ordonné (Order Crossover - OX)
-        Préserve l'ordre relatif des réservations
-        """
+        """Croisement ordonné avec préservation des horaires"""
         if random.random() > prob_croisement:
             return parent1.copy(), parent2.copy()
         
         enfant1 = parent1.copy()
         enfant2 = parent2.copy()
         
-        # Réinitialiser les affectations
         enfant1.affectations = {}
         enfant2.affectations = {}
         
-        # Obtenir la liste des réservations
         reservations = list(parent1.reservations_list)
         n = len(reservations)
         
         if n < 2:
             return enfant1, enfant2
         
-        # Sélectionner deux points de coupure
         point1, point2 = sorted(random.sample(range(n), 2))
         
-        # Créer les affectations pour enfant1
-        # Copier le segment du parent1
+        # Enfant 1
         segment_parent1 = {}
         for i in range(point1, point2):
             res_id = reservations[i].id
             if res_id in parent1.affectations:
                 segment_parent1[res_id] = parent1.affectations[res_id]
         
-        # Compléter avec parent2
         for res_id, minibus_id in parent2.affectations.items():
             if res_id not in segment_parent1:
                 enfant1.affectations[res_id] = minibus_id
         
-        # Ajouter le segment
         enfant1.affectations.update(segment_parent1)
         
-        # Même chose pour enfant2 (inversé)
+        # Enfant 2
         segment_parent2 = {}
         for i in range(point1, point2):
             res_id = reservations[i].id
@@ -87,36 +68,51 @@ class GeneticOperators:
         
         return enfant1, enfant2
     
-    # ============= MUTATION =============
-    
     def mutation(self, solution: Solution, prob_mutation: float = 0.15) -> Solution:
-        """
-        Applique une mutation aléatoire à la solution
-        """
+        """Applique une mutation adaptée aux contraintes horaires"""
         if random.random() > prob_mutation:
             return solution
         
         solution = solution.copy()
         
-        # Choisir un type de mutation
         type_mutation = random.choice([
+            "reassign_compatible",  # ✅ NOUVEAU: réassigner à minibus compatible
             "swap_reservations",
             "reassign_minibus",
-            "inverse_sequence",
-            "insert_reservation"
+            "optimize_station_order"  # ✅ NOUVEAU: optimiser l'ordre des arrêts
         ])
         
-        if type_mutation == "swap_reservations":
+        if type_mutation == "reassign_compatible":
+            solution = self._mutation_reassign_compatible(solution)
+        elif type_mutation == "swap_reservations":
             solution = self._mutation_swap_reservations(solution)
-        
         elif type_mutation == "reassign_minibus":
             solution = self._mutation_reassign_minibus(solution)
+        elif type_mutation == "optimize_station_order":
+            solution = self._mutation_optimize_order(solution)
         
-        elif type_mutation == "inverse_sequence":
-            solution = self._mutation_inverse_sequence(solution)
+        return solution
+    
+    def _mutation_reassign_compatible(self, solution: Solution) -> Solution:
+        """
+        ✅ NOUVEAU: Réassigne une réservation à un minibus dont la route 
+        passe déjà par sa station pickup
+        """
+        if not solution.affectations:
+            return solution
         
-        elif type_mutation == "insert_reservation":
-            solution = self._mutation_insert_reservation(solution)
+        # Choisir une réservation au hasard
+        res_id = random.choice(list(solution.affectations.keys()))
+        reservation = next((r for r in solution.reservations_list if r.id == res_id), None)
+        
+        if not reservation:
+            return solution
+        
+        # Chercher un minibus compatible
+        minibus_compatible = solution.trouver_minibus_compatible(reservation)
+        
+        if minibus_compatible and minibus_compatible != solution.affectations[res_id]:
+            solution.affectations[res_id] = minibus_compatible
         
         return solution
     
@@ -128,7 +124,6 @@ class GeneticOperators:
         res_ids = list(solution.affectations.keys())
         res1, res2 = random.sample(res_ids, 2)
         
-        # Échanger les minibus assignés
         solution.affectations[res1], solution.affectations[res2] = \
             solution.affectations[res2], solution.affectations[res1]
         
@@ -139,10 +134,7 @@ class GeneticOperators:
         if not solution.affectations:
             return solution
         
-        # Choisir une réservation aléatoire
         res_id = random.choice(list(solution.affectations.keys()))
-        
-        # Choisir un nouveau minibus
         ancien_minibus = solution.affectations[res_id]
         minibus_disponibles = [m.id for m in solution.minibus_list if m.id != ancien_minibus]
         
@@ -152,9 +144,11 @@ class GeneticOperators:
         
         return solution
     
-    def _mutation_inverse_sequence(self, solution: Solution) -> Solution:
-        """Inverse un segment dans un itinéraire"""
-        # Choisir un minibus au hasard parmi ceux utilisés
+    def _mutation_optimize_order(self, solution: Solution) -> Solution:
+        """
+        ✅ NOUVEAU: Optimise l'ordre des arrêts dans un itinéraire
+        en minimisant la distance tout en respectant les contraintes
+        """
         minibus_utilises = [mid for mid in solution.itineraires.keys() 
                            if len(solution.itineraires[mid].arrets) > 4]
         
@@ -162,65 +156,24 @@ class GeneticOperators:
             return solution
         
         minibus_id = random.choice(minibus_utilises)
-        arrets = solution.itineraires[minibus_id].arrets
+        itineraire = solution.itineraires[minibus_id]
+        arrets = itineraire.arrets[1:-1]  # Exclure les dépôts
         
-        # Choisir deux points (en excluant le depot de départ et d'arrivée)
-        if len(arrets) <= 4:
+        if len(arrets) <= 2:
             return solution
         
-        i = random.randint(1, len(arrets) - 3)
-        j = random.randint(i + 1, len(arrets) - 2)
+        # Trier les arrêts par heure souhaitée minimale
+        def get_min_time(arret):
+            times = []
+            for res in solution.reservations_list:
+                if res.id in arret.pickups:
+                    times.append(res.desired_time)
+            from datetime import datetime
+            return min(times) if times else datetime.max
         
-        # Inverser le segment
-        arrets[i:j+1] = reversed(arrets[i:j+1])
+        arrets_tries = sorted(arrets, key=get_min_time)
         
-        return solution
-    
-    def _mutation_insert_reservation(self, solution: Solution) -> Solution:
-        """Retire et réinsère une réservation à une position aléatoire"""
-        if not solution.affectations:
-            return solution
-        
-        # Choisir une réservation
-        res_id = random.choice(list(solution.affectations.keys()))
-        minibus_id = solution.affectations[res_id]
-        
-        # Trouver la réservation
-        reservation = next((r for r in solution.reservations_list if r.id == res_id), None)
-        if not reservation:
-            return solution
-        
-        # Retirer les arrêts de cette réservation
-        arrets = solution.itineraires[minibus_id].arrets
-        arrets_filtres = [a for a in arrets if a.reservation_id != res_id]
-        
-        # Réinsérer à une position aléatoire
-        if len(arrets_filtres) >= 2:
-            # Position pour pickup (entre depot départ et dernier arrêt)
-            pos_pickup = random.randint(1, len(arrets_filtres) - 1)
-            # Position pour dropoff (après pickup)
-            pos_dropoff = random.randint(pos_pickup, len(arrets_filtres) - 1)
-            
-            pickup = Arret(
-                station_id=reservation.pickup_station_id,
-                station_name = solution.stations_dict[reservation.pickup_station_id]["name"],
-
-                type="PICKUP",
-                reservation_id=reservation.id,
-                personnes=reservation.number_of_people
-            )
-            
-            dropoff = Arret(
-                station_id=reservation.dropoff_station_id,
-                station_name=solution.stations_dict[reservation.dropoff_station_id]["name"],
-                type="DROPOFF",
-                reservation_id=reservation.id,
-                personnes=reservation.number_of_people
-            )
-            
-            arrets_filtres.insert(pos_pickup, pickup)
-            arrets_filtres.insert(pos_dropoff + 1, dropoff)
-            
-            solution.itineraires[minibus_id].arrets = arrets_filtres
+        # Reconstruire l'itinéraire
+        itineraire.arrets = [itineraire.arrets[0]] + arrets_tries + [itineraire.arrets[-1]]
         
         return solution
