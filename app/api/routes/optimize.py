@@ -14,10 +14,13 @@ OSRM_BASE_URL = "http://router.project-osrm.org"
 async def get_route_geometry(coords_list):
     """
     Récupère la vraie géométrie de route entre plusieurs points via OSRM
+    coords_list: [(lon1, lat1), (lon2, lat2), ...]
+    Retourne: liste de [lat, lon] pour tracer sur la carte
     """
     if len(coords_list) < 2:
         return []
     
+    # Format OSRM: "lon1,lat1;lon2,lat2;..."
     coordinates_str = ";".join([f"{lon},{lat}" for lon, lat in coords_list])
     url = f"{OSRM_BASE_URL}/route/v1/driving/{coordinates_str}"
     
@@ -33,9 +36,10 @@ async def get_route_geometry(coords_list):
         if response.status_code == 200:
             data = response.json()
             if data.get("code") == "Ok" and data.get("routes"):
+                # Récupérer la géométrie (liste de [lon, lat])
                 geometry = data["routes"][0]["geometry"]["coordinates"]
-                # Inverser [lon, lat] -> [lat, lon] pour Leaflet
-                return [[coord[1], coord[0]] for coord in geometry]
+                # Inverser pour avoir [lat, lon] (format Leaflet)
+                return [[lat, lon] for lon, lat in geometry]
         
         logger.warning(f"OSRM route failed: {response.status_code}")
         return []
@@ -59,13 +63,13 @@ async def optimize_routes():
         minibus_raw = get_all_minibus()
         
         if not stations_raw:
-            raise HTTPException(status_code=400, detail="Aucune station disponible")
+            raise HTTPException(status_code=400, detail="Aucune station")
         if not reservations_raw:
-            raise HTTPException(status_code=400, detail="Aucune réservation disponible")
+            raise HTTPException(status_code=400, detail="Aucune réservation")
         if not minibus_raw:
-            raise HTTPException(status_code=400, detail="Aucun minibus disponible")
+            raise HTTPException(status_code=400, detail="Aucun minibus")
         
-        logger.info(f"📊 Données chargées: {len(stations_raw)} stations, {len(reservations_raw)} réservations, {len(minibus_raw)} minibus")
+        logger.info(f"🚀 Lancement de l'optimisation avec {len(minibus_raw)} minibus")
         
         # 2️⃣ Construire stations_dict
         stations_dict = {}
@@ -81,7 +85,7 @@ async def optimize_routes():
         matrice_durees, matrice_distances = get_cost_matrices(points)
         
         if matrice_distances is None or matrice_durees is None:
-            raise HTTPException(status_code=503, detail="Service OSRM indisponible")
+            raise HTTPException(status_code=503, detail="OSRM indisponible")
         
         # 4️⃣ Dépôt
         DEPOT_STATION_ID = 2
@@ -105,28 +109,19 @@ async def optimize_routes():
         best_solution, best_details = ga.run()
         
         if best_solution is None:
-            logger.error("❌ L'algorithme n'a pas retourné de solution")
-            raise HTTPException(status_code=500, detail="Optimisation échouée - Aucune solution trouvée")
+            raise HTTPException(status_code=500, detail="Optimisation échouée")
         
         # 6️⃣ Convertir en dict
         solution_dict = best_solution.to_dict()
-        logger.info(f"📊 Solution générée: {len([k for k in solution_dict.keys() if k.startswith('minibus_')])} minibus")
         
         # 7️⃣ AJOUTER les coordonnées ET les vraies routes GPS
-        logger.info("🗺️ Calcul des routes GPS réelles via OSRM...")
+        logger.info("🗺️ Calcul des routes GPS réelles...")
         
-        routes_calculated = 0
         for minibus_key, minibus_data in solution_dict.items():
             if minibus_key == "METRIQUES_GLOBALES":
                 continue
             
             itineraire = minibus_data.get('itineraire', [])
-            
-            # Skip minibus vides
-            if not itineraire or len(itineraire) == 0:
-                minibus_data['route_geometry'] = []
-                continue
-            
             coords_sequence = []
             
             # Ajouter lat/lon à chaque arrêt
@@ -143,39 +138,33 @@ async def optimize_routes():
             if len(coords_sequence) >= 2:
                 route_geometry = await get_route_geometry(coords_sequence)
                 minibus_data['route_geometry'] = route_geometry
-                routes_calculated += 1
-                logger.info(f"✅ Route OSRM calculée pour {minibus_key}: {len(route_geometry)} points GPS")
+                logger.info(f"✅ Route OSRM calculée pour {minibus_key}: {len(route_geometry)} points")
             else:
                 minibus_data['route_geometry'] = []
-                logger.warning(f"⚠️ Pas assez de coordonnées pour {minibus_key}")
         
-        logger.info(f"✅ Optimisation terminée avec succès! {routes_calculated} routes calculées")
+        logger.info("✅ Optimisation terminée")
         
-        # ✅ RETOUR AU FORMAT ATTENDU PAR LE FRONTEND
         return {
             "success": True,
             "solution": solution_dict,
-            "metrics": best_details,
-            "message": f"Optimisation réussie - {routes_calculated} trajets calculés"
+            "metrics": best_details
         }
         
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Erreur lors de l'optimisation: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
+        logger.error(f"❌ Erreur: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/solutions/latest")
 async def get_latest_solution():
     """
-    Retourne la dernière solution sauvegardée
+    Retourne la dernière solution sauvegardée (ou une solution par défaut)
     """
     try:
-        # TODO: Charger depuis la base de données si disponible
-        # Pour l'instant, retourner une structure vide
-        logger.info("📊 Récupération de la dernière solution...")
-        
+        # Pour l'instant, retourner une solution vide
+        # Plus tard, vous pouvez charger depuis la base de données
         return {
             "success": True,
             "data": {
@@ -188,17 +177,5 @@ async def get_latest_solution():
             }
         }
     except Exception as e:
-        logger.error(f"❌ Erreur récupération solution: {e}")
+        logger.error(f"Erreur récupération solution: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/status")
-async def optimization_status():
-    """
-    Vérifie que le service d'optimisation est disponible
-    """
-    return {
-        "status": "ready",
-        "message": "Service d'optimisation opérationnel",
-        "osrm_url": OSRM_BASE_URL
-    }

@@ -1,133 +1,96 @@
-from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel
-from typing import List
-from ..database import crud
+# app/routers/stations.py
+from fastapi import APIRouter, HTTPException
+from app.database.crud import (
+    get_all_stations, 
+    create_station, 
+    update_station, 
+    delete_station
+)
 import logging
 
+router = APIRouter()
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
-
-# Modèles Pydantic
-class StationBase(BaseModel):
-    name: str
-    latitude: float
-    longitude: float
-
-class StationCreate(StationBase):
-    pass
-
-class StationUpdate(StationBase):
-    pass
-
-class Station(StationBase):
-    id: int
-    
-    class Config:
-        from_attributes = True
-
-@router.get("/api/stations", response_model=List[dict])
+@router.get("/stations")
 async def get_stations():
-    """Récupère toutes les stations depuis la base de données"""
+    """Récupère toutes les stations"""
     try:
-        stations_data = crud.get_all_stations()
-        # Convertir les tuples en dictionnaires
-        stations = [
-            {
-                "id": station[0],
-                "name": station[1],
-                "latitude": station[2],
-                "longitude": station[3]
-            }
-            for station in stations_data
-        ]
-        logger.info(f"✅ Récupéré {len(stations)} stations")
-        return stations
+        stations = get_all_stations()
+        
+        # Formater les données
+        stations_list = []
+        for (station_id, name, lat, lon) in stations:
+            stations_list.append({
+                "id": station_id,
+                "name": name,
+                "latitude": lat,
+                "longitude": lon
+            })
+        
+        logger.info(f"✅ Récupéré {len(stations_list)} stations")
+        
+        return {
+            "success": True,
+            "data": stations_list
+        }
     except Exception as e:
-        logger.error(f"❌ Erreur lors de la récupération des stations: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erreur lors de la récupération des stations"
-        )
+        logger.error(f"❌ Erreur récupération stations: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/api/stations", response_model=dict, status_code=status.HTTP_201_CREATED)
-async def create_station(station: StationCreate):
+@router.post("/stations")
+async def add_station(station_data: dict):
     """Crée une nouvelle station"""
     try:
-        station_id = crud.create_station(
-            name=station.name,
-            latitude=station.latitude,
-            longitude=station.longitude
-        )
+        name = station_data.get("name")
+        latitude = station_data.get("latitude")
+        longitude = station_data.get("longitude")
         
-        if station_id:
-            logger.info(f"✅ Station créée: {station.name}")
-            return {
+        if not all([name, latitude, longitude]):
+            raise HTTPException(status_code=400, detail="Données manquantes")
+        
+        station_id = create_station(name, latitude, longitude)
+        
+        return {
+            "success": True,
+            "data": {
                 "id": station_id,
-                "name": station.name,
-                "latitude": station.latitude,
-                "longitude": station.longitude
+                "name": name,
+                "latitude": latitude,
+                "longitude": longitude
             }
-        else:
-             raise Exception("Échec de l'insertion en base de données")
+        }
     except Exception as e:
-        logger.error(f"❌ Erreur lors de la création de la station: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erreur lors de la création de la station"
-        )
+        logger.error(f"❌ Erreur création station: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-@router.put("/api/stations/{station_id}", response_model=dict)
-async def update_station(station_id: int, station: StationUpdate):
-    """Met à jour une station existante"""
+@router.put("/stations/{station_id}")
+async def modify_station(station_id: int, station_data: dict):
+    """Met à jour une station"""
     try:
-        success = crud.update_station(
-            station_id=station_id,
-            name=station.name,
-            latitude=station.latitude,
-            longitude=station.longitude
-        )
+        name = station_data.get("name")
+        latitude = station_data.get("latitude")
+        longitude = station_data.get("longitude")
         
-        if success:
-            logger.info(f"✅ Station {station_id} mise à jour")
-            return {
-                "id": station_id,
-                "name": station.name,
-                "latitude": station.latitude,
-                "longitude": station.longitude
-            }
-        else:
-             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Station non trouvée"
-            )
-    except HTTPException:
-        raise
+        update_station(station_id, name, latitude, longitude)
+        
+        return {
+            "success": True,
+            "message": "Station mise à jour"
+        }
     except Exception as e:
-        logger.error(f"❌ Erreur lors de la mise à jour de la station: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erreur lors de la mise à jour de la station"
-        )
+        logger.error(f"❌ Erreur mise à jour station: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-@router.delete("/api/stations/{station_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_station(station_id: int):
+@router.delete("/stations/{station_id}")
+async def remove_station(station_id: int):
     """Supprime une station"""
     try:
-        success = crud.delete_station(station_id)
-        if success:
-            logger.info(f"✅ Station {station_id} supprimée")
-            return None
-        else:
-             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Station non trouvée"
-            )
-    except HTTPException:
-        raise
+        delete_station(station_id)
+        
+        return {
+            "success": True,
+            "message": "Station supprimée"
+        }
     except Exception as e:
-        logger.error(f"❌ Erreur lors de la suppression de la station: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erreur lors de la suppression de la station"
-        )
+        logger.error(f"❌ Erreur suppression station: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
