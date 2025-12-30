@@ -470,3 +470,83 @@ def get_user_by_email(email):
     except Exception as e:
         logger.error(f"❌ Erreur get_user_by_email: {e}")
         return None
+
+def create_user(email, password, role, nom, prenom):
+    """Crée un nouvel utilisateur (chauffeur ou admin)"""
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO users (email, password, role, nom, prenom)
+            VALUES (%s, %s, %s, %s, %s)
+            RETURNING id;
+        """, (email, password, role, nom, prenom))
+        user_id = cursor.fetchone()[0]
+        conn.commit()
+        return user_id
+    except Exception as e:
+        logger.error(f"❌ Erreur create_user: {e}")
+        return None
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): db.release_connection(conn)
+
+def update_user(user_id, email, role, nom, prenom):
+    """Met à jour un utilisateur"""
+    conn = None
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE users 
+            SET email = %s, role = %s, nom = %s, prenom = %s
+            WHERE id = %s;
+        """, (email, role, nom, prenom, user_id))
+        conn.commit()
+        return True
+    except Exception as e:
+        logger.error(f"❌ Erreur update_user: {e}")
+        return False
+    finally:
+        if conn:
+            db.release_connection(conn)
+
+def delete_user(user_id):
+    """Supprime un utilisateur"""
+    conn = None
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM users WHERE id = %s;", (user_id,))
+        conn.commit()
+        return True
+    except Exception as e:
+        logger.error(f"❌ Erreur delete_user: {e}")
+        return False
+    finally:
+        if conn:
+            db.release_connection(conn)
+
+
+def get_users_by_role(role):
+    """Récupère tous les utilisateurs ayant un rôle spécifique"""
+    conn = None
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, email, password, role, nom, prenom 
+            FROM users 
+            WHERE role = %s;
+        """, (role,))
+        users = cursor.fetchall()
+        cursor.close()
+        return users
+    except Exception as e:
+        logger.error(f"❌ Erreur get_users_by_role: {e}")
+        return []
+    finally:
+        if conn:
+            db.release_connection(conn)
+
+            

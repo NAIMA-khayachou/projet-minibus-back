@@ -1,3 +1,4 @@
+# C:\Users\Imane\projet-minibus-back\app\routers\buses.py
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 from typing import List, Optional
@@ -28,7 +29,7 @@ class Bus(BusBase):
     class Config:
         from_attributes = True
 
-@router.get("/api/minibus", response_model=List[dict])
+@router.get("/", response_model=List[dict])
 async def get_minibus():
     """Récupère tous les minibus"""
     try:
@@ -44,7 +45,7 @@ async def get_minibus():
             detail="Erreur lors de la récupération des minibus"
         )
 
-@router.post("/api/minibus", response_model=dict, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=dict, status_code=status.HTTP_201_CREATED)
 async def create_minibus(bus: BusCreate):
     """Crée un nouveau minibus"""
     try:
@@ -70,7 +71,7 @@ async def create_minibus(bus: BusCreate):
             detail="Erreur lors de la création du minibus"
         )
 
-@router.put("/api/minibus/{bus_id}", response_model=dict)
+@router.put("/{bus_id}", response_model=dict)
 async def update_minibus(bus_id: int, bus: BusUpdate):
     """Met à jour un minibus existant"""
     try:
@@ -89,7 +90,7 @@ async def update_minibus(bus_id: int, bus: BusUpdate):
                 "status": bus.status
             }
         else:
-             raise HTTPException(
+            raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Minibus non trouvé"
             )
@@ -102,7 +103,7 @@ async def update_minibus(bus_id: int, bus: BusUpdate):
             detail="Erreur lors de la mise à jour du minibus"
         )
 
-@router.delete("/api/minibus/{bus_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{bus_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_minibus(bus_id: int):
     """Supprime un minibus"""
     try:
@@ -110,7 +111,7 @@ async def delete_minibus(bus_id: int):
         if success:
             return None
         else:
-             raise HTTPException(
+            raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Minibus non trouvé"
             )

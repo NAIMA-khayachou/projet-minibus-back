@@ -37,12 +37,17 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
-
+def get_password_hash(password):
+    """Génère un hash bcrypt pour un mot de passe en clair"""
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
+    return hashed.decode('utf-8')
 def verify_password(plain_password, hashed_password):
     """Vérifie le mot de passe avec bcrypt"""
     return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
 
-@router.post("/api/login", response_model=LoginResponse)
+@router.post("/login", response_model=LoginResponse)
+
 async def login(credentials: LoginRequest):
     """
     Authentification de l'utilisateur via la base de données

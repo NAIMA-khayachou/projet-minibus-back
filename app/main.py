@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .database.connection import db
 from .routers import auth, stations, drivers, optimization, metrics, buses
 import logging
+from app.routers import buses
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -26,7 +27,7 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/api", tags=["Authentication"])
 app.include_router(stations.router, prefix="/api", tags=["Stations"])  # ✅ Important
 app.include_router(drivers.router, prefix="/api", tags=["Drivers"])
-app.include_router(buses.router, prefix="/api", tags=["Buses"])
+app.include_router(buses.router, prefix="/api/minibus", tags=["buses"])
 app.include_router(optimization.router, prefix="/api", tags=["Optimization"])
 app.include_router(metrics.router, prefix="/api", tags=["Metrics"])
 
