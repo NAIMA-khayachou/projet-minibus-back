@@ -1,3 +1,4 @@
+#\app\models\station.py
 from sqlalchemy import Column, Integer, String, Float, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
