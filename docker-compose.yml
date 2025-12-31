@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # =============================================
+  # 1. POSTGRESQL (LE SERVEUR DE DONNÉES)
+  # =============================================
+  db:
+    image: postgres:16-alpine # Image officielle, version 16, légère (alpine)
+    container_name: minibus_postgres_db
+    restart: always # Redémarre automatiquement si le conteneur s'arrête
+    environment:
+      # --- Configuration de la DB ---
+      POSTGRES_USER: minibus_user
+      POSTGRES_PASSWORD: 'minibus_user' # CLÉ!
+      POSTGRES_DB: minibus_db
+    ports:
+      # Mappe le port 5432 du conteneur au port 5432 de votre machine
+      - "5432:5432" 
+    volumes:
+      # 1. Persistance des données (obligatoire pour ne pas perdre les données)
+      - postgres_data:/var/lib/postgresql/data
+      # 2. Script d'initialisation (pour créer les tables et insérer les données)
+      # Assurez-vous que votre script SQL est dans le sous-dossier 'database'
+     # Dans la section 'volumes:' du service 'db'
+      #- ./database/transport_db.sql:/docker-entrypoint-initdb.d/transport_db.sql
+      #- ./database:/docker-entrypoint-initdb.d
+
+  # =============================================
+  # 2. PGADMIN (L'OUTIL CLIENT/INTERFACE GRAPHIQUE)
+  # =============================================
+  pgadmin:
+    image: dpage/pgadmin4:latest # Image officielle
+    container_name: minibus_pgadmin
+    restart: always
+    environment:
+      # --- Configuration de l'accès à pgAdmin ---
+      PGADMIN_DEFAULT_EMAIL: admin@minibus.dev # Utilisé pour se connecter à l'interface
+      PGADMIN_DEFAULT_PASSWORD: <VOTRE_MOT_DE_PASSE_PGADMIN> # CLÉ!
+    ports:
+      # Accès à l'interface pgAdmin via http://localhost:8081
+      - "8081:80" 
+    volumes:
+      # Persistance des configurations pgAdmin (serveurs enregistrés, etc.)
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      # Assure que le conteneur 'db' est démarré avant de lancer pgAdmin
+      - db
+
+# Définition des volumes (espaces de stockage persistant)
+volumes:
+  postgres_data:
+  pgadmin_data:

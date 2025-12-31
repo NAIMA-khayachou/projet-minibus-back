@@ -1,0 +1,234 @@
+{
+  "minibus_1": {
+    "license_plate": "M-1234-AB",
+    "itineraire": [
+      {
+        "station": "Gare Marrakech",
+        "station_id": 2,
+        "type": "DEPOT",
+        "heure_arrivee": "2025-12-29T07:30:00",
+        "pickups": [],
+        "dropoffs": [],
+        "distance_depuis_precedent": 0.0,
+        "duree_depuis_precedent": 0.0,
+        "personnes_montantes": 0,
+        "personnes_descendantes": 0,
+        "passagers_a_bord": 0,
+        "capacite_restante": 20
+      },
+      {
+        "station": "Jamaâ El Fna",
+        "station_id": 1,
+        "type": "STOP",
+        "heure_arrivee": "2025-12-29T07:35:14.400000",
+        "pickups": [
+          1
+        ],
+        "dropoffs": [],
+        "distance_depuis_precedent": 1.69,
+        "duree_depuis_precedent": 5.0,
+        "personnes_montantes": 3,
+        "personnes_descendantes": 0,
+        "passagers_a_bord": 3,
+        "capacite_restante": 17
+      },
+      {
+        "station": "Gare Marrakech",
+        "station_id": 2,
+        "type": "STOP",
+        "heure_arrivee": "2025-12-29T07:40:14.600000",
+        "pickups": [
+          2
+        ],
+        "dropoffs": [],
+        "distance_depuis_precedent": 1.64,
+        "duree_depuis_precedent": 5.0,
+        "personnes_montantes": 2,
+        "personnes_descendantes": 0,
+        "passagers_a_bord": 5,
+        "capacite_restante": 15
+      },
+      {
+        "station": "Université Cadi Ayyad",
+        "station_id": 8,
+        "type": "STOP",
+        "heure_arrivee": "2025-12-29T07:45:06.900000",
+        "pickups": [
+          3,
+          4
+        ],
+        "dropoffs": [],
+        "distance_depuis_precedent": 1.79,
+        "duree_depuis_precedent": 5.0,
+        "personnes_montantes": 6,
+        "personnes_descendantes": 0,
+        "passagers_a_bord": 11,
+        "capacite_restante": 9
+      },
+      {
+        "station": "Gueliz",
+        "station_id": 4,
+        "type": "STOP",
+        "heure_arrivee": "2025-12-29T07:49:50.800000",
+        "pickups": [
+          5
+        ],
+        "dropoffs": [
+          3
+        ],
+        "distance_depuis_precedent": 1.67,
+        "duree_depuis_precedent": 5.0,
+        "personnes_montantes": 1,
+        "personnes_descendantes": 4,
+        "passagers_a_bord": 8,
+        "capacite_restante": 12
+      },
+      {
+        "station": "Ménara",
+        "station_id": 3,
+        "type": "STOP",
+        "heure_arrivee": "2025-12-29T08:00:43.400000",
+        "pickups": [
+          6
+        ],
+        "dropoffs": [],
+        "distance_depuis_precedent": 4.68,
+        "duree_depuis_precedent": 11.0,
+        "personnes_montantes": 2,
+        "personnes_descendantes": 0,
+        "passagers_a_bord": 10,
+        "capacite_restante": 10
+      },
+      {
+        "station": "Aéroport Marrakech",
+        "station_id": 7,
+        "type": "STOP",
+        "heure_arrivee": "2025-12-29T08:17:02.600000",
+        "pickups": [],
+        "dropoffs": [
+          1,
+          2
+        ],
+        "distance_depuis_precedent": 6.24,
+        "duree_depuis_precedent": 16.0,
+        "personnes_montantes": 0,
+        "personnes_descendantes": 5,
+        "passagers_a_bord": 5,
+        "capacite_restante": 15
+      },
+      {
+        "station": "Palmeraie",
+        "station_id": 5,
+        "type": "STOP",
+        "heure_arrivee": "2025-12-29T08:39:41.500000",
+        "pickups": [],
+        "dropoffs": [
+          6
+        ],
+        "distance_depuis_precedent": 13.18,
+        "duree_depuis_precedent": 23.0,
+        "personnes_montantes": 0,
+        "personnes_descendantes": 2,
+        "passagers_a_bord": 3,
+        "capacite_restante": 17
+      },
+      {
+        "station": "Gare Marrakech",
+        "station_id": 2,
+        "type": "DEPOT",
+        "heure_arrivee": "2025-12-29T08:49:46.400000",
+        "pickups": [],
+        "dropoffs": [],
+        "distance_depuis_precedent": 6.08,
+        "duree_depuis_precedent": 10.0,
+        "personnes_montantes": 0,
+        "personnes_descendantes": 0,
+        "passagers_a_bord": 3,
+        "capacite_restante": 17
+      }
+    ],
+    "stations_parcourues": [
+      "Gare Marrakech",
+      "Jamaâ El Fna",
+      "Gare Marrakech",
+      "Université Cadi Ayyad",
+      "Gueliz",
+      "Ménara",
+      "Aéroport Marrakech",
+      "Palmeraie",
+      "Gare Marrakech"
+    ],
+    "distance_totale": 36.98,
+    "duree_totale": 80.0,
+    "capacite_minibus": 20,
+    "charge_maximale_atteinte": 11,
+    "reservations_servies": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "nombre_arrets": 9,
+    "violations_horaire": 0
+  },
+  "minibus_2": {
+    "license_plate": "M-5678-CD",
+    "itineraire": [],
+    "stations_parcourues": [],
+    "distance_totale": 0.0,
+    "duree_totale": 0.0,
+    "capacite_minibus": 18,
+    "charge_maximale_atteinte": 0,
+    "reservations_servies": [],
+    "nombre_arrets": 0,
+    "violations_horaire": 0
+  },
+  "minibus_3": {
+    "license_plate": "M-9012-EF",
+    "itineraire": [],
+    "stations_parcourues": [],
+    "distance_totale": 0.0,
+    "duree_totale": 0.0,
+    "capacite_minibus": 22,
+    "charge_maximale_atteinte": 0,
+    "reservations_servies": [],
+    "nombre_arrets": 0,
+    "violations_horaire": 0
+  },
+  "minibus_4": {
+    "license_plate": "M-3456-GH",
+    "itineraire": [],
+    "stations_parcourues": [],
+    "distance_totale": 0.0,
+    "duree_totale": 0.0,
+    "capacite_minibus": 16,
+    "charge_maximale_atteinte": 0,
+    "reservations_servies": [],
+    "nombre_arrets": 0,
+    "violations_horaire": 0
+  },
+  "minibus_5": {
+    "license_plate": "M-7890-IJ",
+    "itineraire": [],
+    "stations_parcourues": [],
+    "distance_totale": 0.0,
+    "duree_totale": 0.0,
+    "capacite_minibus": 20,
+    "charge_maximale_atteinte": 0,
+    "reservations_servies": [],
+    "nombre_arrets": 0,
+    "violations_horaire": 0
+  },
+  "METRIQUES_GLOBALES": {
+    "distance_totale_flotte": 36.98,
+    "duree_totale_flotte": 80.0,
+    "nombre_minibus_utilises": 0,
+    "nombre_total_reservations": 7,
+    "reservations_satisfaites": 6,
+    "violations_capacite": 0,
+    "retard_total_minutes": 0.0,
+    "fitness_score": -163.02
+  }
+}

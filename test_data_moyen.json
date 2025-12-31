@@ -1,0 +1,484 @@
+{
+  "scenario": "moyen",
+  "timestamp": "2025-11-27T23:42:47.583303",
+  "zone": {
+    "lat_min": 33.52,
+    "lat_max": 33.65,
+    "lon_min": -7.7,
+    "lon_max": -7.5
+  },
+  "demandes": [
+    {
+      "id": 1,
+      "depart": {
+        "lat": 33.524429,
+        "lon": -7.674217
+      },
+      "arrivee": {
+        "lat": 33.5855,
+        "lon": -7.668042
+      },
+      "nb_passagers": 2,
+      "heure_demande": "12:45",
+      "priorite": "normale"
+    },
+    {
+      "id": 2,
+      "depart": {
+        "lat": 33.639411,
+        "lon": -7.570378
+      },
+      "arrivee": {
+        "lat": 33.52597,
+        "lon": -7.566458
+      },
+      "nb_passagers": 4,
+      "heure_demande": "09:15",
+      "priorite": "urgente"
+    },
+    {
+      "id": 3,
+      "depart": {
+        "lat": 33.646406,
+        "lon": -7.625501
+      },
+      "arrivee": {
+        "lat": 33.597259,
+        "lon": -7.625716
+      },
+      "nb_passagers": 4,
+      "heure_demande": "15:43",
+      "priorite": "normale"
+    },
+    {
+      "id": 4,
+      "depart": {
+        "lat": 33.536982,
+        "lon": -7.686124
+      },
+      "arrivee": {
+        "lat": 33.646462,
+        "lon": -7.672804
+      },
+      "nb_passagers": 2,
+      "heure_demande": "11:03",
+      "priorite": "normale"
+    },
+    {
+      "id": 5,
+      "depart": {
+        "lat": 33.608953,
+        "lon": -7.6754
+      },
+      "arrivee": {
+        "lat": 33.566777,
+        "lon": -7.586767
+      },
+      "nb_passagers": 3,
+      "heure_demande": "16:58",
+      "priorite": "urgente"
+    },
+    {
+      "id": 6,
+      "depart": {
+        "lat": 33.641269,
+        "lon": -7.518827
+      },
+      "arrivee": {
+        "lat": 33.575986,
+        "lon": -7.546708
+      },
+      "nb_passagers": 2,
+      "heure_demande": "12:52",
+      "priorite": "normale"
+    },
+    {
+      "id": 7,
+      "depart": {
+        "lat": 33.606016,
+        "lon": -7.507481
+      },
+      "arrivee": {
+        "lat": 33.63159,
+        "lon": -7.505457
+      },
+      "nb_passagers": 2,
+      "heure_demande": "07:35",
+      "priorite": "normale"
+    },
+    {
+      "id": 8,
+      "depart": {
+        "lat": 33.593651,
+        "lon": -7.624238
+      },
+      "arrivee": {
+        "lat": 33.597304,
+        "lon": -7.585118
+      },
+      "nb_passagers": 3,
+      "heure_demande": "12:41",
+      "priorite": "urgente"
+    },
+    {
+      "id": 9,
+      "depart": {
+        "lat": 33.625816,
+        "lon": -7.543737
+      },
+      "arrivee": {
+        "lat": 33.584518,
+        "lon": -7.538932
+      },
+      "nb_passagers": 2,
+      "heure_demande": "08:48",
+      "priorite": "normale"
+    },
+    {
+      "id": 10,
+      "depart": {
+        "lat": 33.637612,
+        "lon": -7.568761
+      },
+      "arrivee": {
+        "lat": 33.603414,
+        "lon": -7.510331
+      },
+      "nb_passagers": 1,
+      "heure_demande": "19:23",
+      "priorite": "normale"
+    },
+    {
+      "id": 11,
+      "depart": {
+        "lat": 33.635954,
+        "lon": -7.515
+      },
+      "arrivee": {
+        "lat": 33.590377,
+        "lon": -7.544598
+      },
+      "nb_passagers": 3,
+      "heure_demande": "08:17",
+      "priorite": "normale"
+    },
+    {
+      "id": 12,
+      "depart": {
+        "lat": 33.568653,
+        "lon": -7.565662
+      },
+      "arrivee": {
+        "lat": 33.606905,
+        "lon": -7.566173
+      },
+      "nb_passagers": 4,
+      "heure_demande": "10:55",
+      "priorite": "normale"
+    },
+    {
+      "id": 13,
+      "depart": {
+        "lat": 33.604089,
+        "lon": -7.665715
+      },
+      "arrivee": {
+        "lat": 33.58541,
+        "lon": -7.691936
+      },
+      "nb_passagers": 3,
+      "heure_demande": "17:56",
+      "priorite": "normale"
+    },
+    {
+      "id": 14,
+      "depart": {
+        "lat": 33.562837,
+        "lon": -7.592437
+      },
+      "arrivee": {
+        "lat": 33.565693,
+        "lon": -7.653662
+      },
+      "nb_passagers": 1,
+      "heure_demande": "15:00",
+      "priorite": "normale"
+    },
+    {
+      "id": 15,
+      "depart": {
+        "lat": 33.58761,
+        "lon": -7.606757
+      },
+      "arrivee": {
+        "lat": 33.587458,
+        "lon": -7.612062
+      },
+      "nb_passagers": 4,
+      "heure_demande": "13:57",
+      "priorite": "urgente"
+    },
+    {
+      "id": 16,
+      "depart": {
+        "lat": 33.639732,
+        "lon": -7.578862
+      },
+      "arrivee": {
+        "lat": 33.537917,
+        "lon": -7.514803
+      },
+      "nb_passagers": 2,
+      "heure_demande": "21:19",
+      "priorite": "urgente"
+    },
+    {
+      "id": 17,
+      "depart": {
+        "lat": 33.639647,
+        "lon": -7.521471
+      },
+      "arrivee": {
+        "lat": 33.532053,
+        "lon": -7.627467
+      },
+      "nb_passagers": 3,
+      "heure_demande": "09:02",
+      "priorite": "normale"
+    },
+    {
+      "id": 18,
+      "depart": {
+        "lat": 33.635002,
+        "lon": -7.654178
+      },
+      "arrivee": {
+        "lat": 33.615996,
+        "lon": -7.532435
+      },
+      "nb_passagers": 2,
+      "heure_demande": "11:10",
+      "priorite": "urgente"
+    },
+    {
+      "id": 19,
+      "depart": {
+        "lat": 33.592631,
+        "lon": -7.504474
+      },
+      "arrivee": {
+        "lat": 33.605257,
+        "lon": -7.648459
+      },
+      "nb_passagers": 1,
+      "heure_demande": "12:58",
+      "priorite": "normale"
+    },
+    {
+      "id": 20,
+      "depart": {
+        "lat": 33.522007,
+        "lon": -7.599951
+      },
+      "arrivee": {
+        "lat": 33.545443,
+        "lon": -7.597346
+      },
+      "nb_passagers": 4,
+      "heure_demande": "07:10",
+      "priorite": "urgente"
+    },
+    {
+      "id": 21,
+      "depart": {
+        "lat": 33.569068,
+        "lon": -7.673169
+      },
+      "arrivee": {
+        "lat": 33.641092,
+        "lon": -7.614123
+      },
+      "nb_passagers": 3,
+      "heure_demande": "08:52",
+      "priorite": "normale"
+    },
+    {
+      "id": 22,
+      "depart": {
+        "lat": 33.525337,
+        "lon": -7.626701
+      },
+      "arrivee": {
+        "lat": 33.59911,
+        "lon": -7.581798
+      },
+      "nb_passagers": 2,
+      "heure_demande": "11:20",
+      "priorite": "normale"
+    },
+    {
+      "id": 23,
+      "depart": {
+        "lat": 33.642525,
+        "lon": -7.502087
+      },
+      "arrivee": {
+        "lat": 33.640944,
+        "lon": -7.699514
+      },
+      "nb_passagers": 1,
+      "heure_demande": "13:08",
+      "priorite": "normale"
+    },
+    {
+      "id": 24,
+      "depart": {
+        "lat": 33.574099,
+        "lon": -7.573868
+      },
+      "arrivee": {
+        "lat": 33.570435,
+        "lon": -7.507287
+      },
+      "nb_passagers": 2,
+      "heure_demande": "11:36",
+      "priorite": "normale"
+    },
+    {
+      "id": 25,
+      "depart": {
+        "lat": 33.536566,
+        "lon": -7.546178
+      },
+      "arrivee": {
+        "lat": 33.632124,
+        "lon": -7.502575
+      },
+      "nb_passagers": 1,
+      "heure_demande": "12:43",
+      "priorite": "normale"
+    },
+    {
+      "id": 26,
+      "depart": {
+        "lat": 33.557903,
+        "lon": -7.538656
+      },
+      "arrivee": {
+        "lat": 33.545126,
+        "lon": -7.513276
+      },
+      "nb_passagers": 4,
+      "heure_demande": "19:53",
+      "priorite": "normale"
+    },
+    {
+      "id": 27,
+      "depart": {
+        "lat": 33.520464,
+        "lon": -7.586294
+      },
+      "arrivee": {
+        "lat": 33.576398,
+        "lon": -7.55703
+      },
+      "nb_passagers": 2,
+      "heure_demande": "10:17",
+      "priorite": "normale"
+    },
+    {
+      "id": 28,
+      "depart": {
+        "lat": 33.605095,
+        "lon": -7.527967
+      },
+      "arrivee": {
+        "lat": 33.589189,
+        "lon": -7.634065
+      },
+      "nb_passagers": 2,
+      "heure_demande": "12:07",
+      "priorite": "normale"
+    },
+    {
+      "id": 29,
+      "depart": {
+        "lat": 33.634651,
+        "lon": -7.508671
+      },
+      "arrivee": {
+        "lat": 33.568898,
+        "lon": -7.579475
+      },
+      "nb_passagers": 2,
+      "heure_demande": "08:24",
+      "priorite": "urgente"
+    },
+    {
+      "id": 30,
+      "depart": {
+        "lat": 33.608665,
+        "lon": -7.633781
+      },
+      "arrivee": {
+        "lat": 33.60863,
+        "lon": -7.554949
+      },
+      "nb_passagers": 4,
+      "heure_demande": "21:17",
+      "priorite": "normale"
+    }
+  ],
+  "bus": [
+    {
+      "id": 1,
+      "capacite": 10,
+      "position_initiale": {
+        "lat": 33.608675,
+        "lon": -7.5723
+      },
+      "disponible": true
+    },
+    {
+      "id": 2,
+      "capacite": 6,
+      "position_initiale": {
+        "lat": 33.529439,
+        "lon": -7.606152
+      },
+      "disponible": true
+    },
+    {
+      "id": 3,
+      "capacite": 6,
+      "position_initiale": {
+        "lat": 33.535166,
+        "lon": -7.542394
+      },
+      "disponible": true
+    },
+    {
+      "id": 4,
+      "capacite": 10,
+      "position_initiale": {
+        "lat": 33.520101,
+        "lon": -7.677087
+      },
+      "disponible": true
+    },
+    {
+      "id": 5,
+      "capacite": 10,
+      "position_initiale": {
+        "lat": 33.575077,
+        "lon": -7.539084
+      },
+      "disponible": true
+    }
+  ],
+  "contraintes": {
+    "temps_max_trajet": 45,
+    "distance_max_detour": 2.0,
+    "temps_attente_max": 15
+  }
+}
